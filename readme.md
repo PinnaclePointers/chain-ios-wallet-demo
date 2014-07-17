@@ -10,7 +10,7 @@ This open source Bitcoin wallet uses the iOS 8 Touch ID API to securely store yo
 Fork it and build something great! 
 
 ## Installation
-Chain Wallet uses the [Chain API iOS SDK](https://github.com/chain-engineering/chain-ios) and [BitcoinCore](https://github.com/oleganza/CoreBitcoin), both included as CocoaPods.
+Chain Wallet uses the [Chain API iOS SDK](https://github.com/chain-engineering/chain-ios) and [CoreBitcoin](https://github.com/oleganza/CoreBitcoin), both included as CocoaPods.
 
 To install, first run:
 ```
