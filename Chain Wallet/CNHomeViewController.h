@@ -8,12 +8,5 @@
 #import <UIKit/UIKit.h>
 
 @interface CNHomeViewController : UIViewController
-@property (weak, nonatomic) IBOutlet UIButton *sendButton;
-@property NSString *address;
-@property NSString *sendToAddress;
-@property (weak, nonatomic) IBOutlet UILabel *transactionAmount;
-@property (weak, nonatomic) IBOutlet UILabel *transactionAddress;
-@property (weak, nonatomic) IBOutlet UILabel *transactionDate;
-
 @end
 

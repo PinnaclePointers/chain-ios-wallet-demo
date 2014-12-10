@@ -4,14 +4,13 @@
 //
 //  Copyright (c) 2014 Chain Inc. All rights reserved.
 //
+#import "Chain.h"
+#import <CoreBitcoin/CoreBitcoin+Categories.h>
 
 #import "CNHomeViewController.h"
 #import "CNSendViewController.h"
 #import "CNExportPKeyViewController.h"
-#import "CDZQRScanningViewController.h"
-#import "Chain.h"
 #import "CNSecretStore.h"
-#import <CoreBitcoin/CoreBitcoin+Categories.h>
 #import "UIColor+Additions.h"
 #import "NSString+Additions.h"
 
@@ -19,34 +18,35 @@
 #define OPTIONS_ACTION_SHEET_TAG 2
 
 @interface CNHomeViewController () <UIActionSheetDelegate, UITableViewDataSource, UITableViewDelegate>
-@property NSTimer *refreshTimer;
-@property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property NSArray *transactions;
-@property BTCSatoshi balance;
-@property (weak, nonatomic) IBOutlet UIView *noTransactionsFooterView;
+@property(nonatomic, weak) IBOutlet UITableView *tableView;
+@property(nonatomic, weak) IBOutlet UIView *noTransactionsFooterView;
+
+@property(nonatomic) NSArray *transactions;
+@property(nonatomic) BTCSatoshi balance;
+
+
+@property(weak, nonatomic) IBOutlet UIButton *sendButton;
+@property NSString *address;
+@property NSString *sendToAddress;
+@property(weak, nonatomic) IBOutlet UILabel *transactionAmount;
+@property(weak, nonatomic) IBOutlet UILabel *transactionAddress;
+@property(weak, nonatomic) IBOutlet UILabel *transactionDate;
 @end
 
 @implementation CNHomeViewController
 
 - (void)dealloc {
-    [_refreshTimer invalidate];
-    _refreshTimer = nil;
+
 }
-            
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    
-    self.tableView.dataSource = self;
-    self.tableView.delegate = self;
-    self.tableView.allowsSelection = NO;
-    
+
     [self updateBalanceAndTransactions];
-    self.refreshTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(updateBalanceAndTransactions) userInfo:nil repeats:YES];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-    [self.refreshTimer invalidate];
 }
 
 - (void)viewDidLoad {
@@ -59,7 +59,18 @@
     [self.tableView reloadData];
 }
 
-#pragma mark - IB Actions
+
+#pragma mark - Properties
+
+
+- (BTCAddress*) address {
+    return [CNSecretStore chainSecretStore].currentAddress;
+}
+
+
+
+
+#pragma mark - Actions
 
 - (IBAction)tapSendButton:(id)sender {
     [self _showSendMethodOptionSheet];

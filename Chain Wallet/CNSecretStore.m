@@ -122,6 +122,10 @@
     return key;
 }
 
+- (BTCAddress*) currentAddress {
+    return self.publicKey.publicKeyAddress;
+}
+
 
 #pragma mark - Secret Accessors
 

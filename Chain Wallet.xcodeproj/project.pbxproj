@@ -17,6 +17,7 @@
 		00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */; };
 		00C2DE311966248900278CB3 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C2DE301966248900278CB3 /* MessageUI.framework */; };
 		20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */; };
+		20C6D3C21A38C259000E04C6 /* CNLaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */; };
 		567B7A5D11694E0A8EDEDB42 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DBF0F8BEE9CE42109B86A0DA /* libPods.a */; };
 		C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */; };
 		C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */; };
@@ -55,6 +56,7 @@
 		10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
 		20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSecretStore.h; sourceTree = "<group>"; };
 		20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSecretStore.m; sourceTree = "<group>"; };
+		20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CNLaunchScreen.xib; sourceTree = "<group>"; };
 		C94D88F9196609AA009240BF /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
 		C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNBitcoinSendManager.h; sourceTree = "<group>"; };
 		C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNBitcoinSendManager.m; sourceTree = "<group>"; };
@@ -125,10 +127,11 @@
 				C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */,
 				20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */,
 				20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */,
+				C9A02FA11974981A00680A53 /* Additions */,
 				000BEB8119649F48008E2865 /* Images.xcassets */,
 				000BEB7E19649F48008E2865 /* Main.storyboard */,
+				20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */,
 				000BEB7419649F48008E2865 /* Supporting Files */,
-				C9A02FA11974981A00680A53 /* Additions */,
 			);
 			path = "Chain Wallet";
 			sourceTree = "<group>";
@@ -253,6 +256,7 @@
 			files = (
 				000BEB8019649F48008E2865 /* Main.storyboard in Resources */,
 				000BEB8219649F48008E2865 /* Images.xcassets in Resources */,
+				20C6D3C21A38C259000E04C6 /* CNLaunchScreen.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

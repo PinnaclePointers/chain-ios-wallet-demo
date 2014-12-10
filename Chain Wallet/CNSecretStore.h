@@ -30,6 +30,9 @@
 // display an address balance to the user.
 @property(nonatomic, readonly) BTCKey* publicKey;
 
+// Current address used to receive funds (computed from publicKey).
+@property(nonatomic, readonly) BTCAddress* currentAddress;
+
 // Creates an instance with a given service name shared by all items.
 - (id) initWithServiceName:(NSString*)serviceName;
 
