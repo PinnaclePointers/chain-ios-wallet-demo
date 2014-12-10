@@ -32,7 +32,7 @@
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     
     // Uncomment to test the welcome screen. Backup your private key first.
-    if ((1)) {
+    if ((0)) {
         [[CNSecretStore chainSecretStore] unlock:^(CNSecretStore *store) {
             store.key = nil;
         } reason:NSLocalizedString(@"Authorize removing the private key", @"")];
