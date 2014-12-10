@@ -6,20 +6,36 @@
 //
 
 #import "CNBitcoinSendManager.h"
-#import "CNKeyManager.h"
 #import "Chain.h"
+#import "CNSecretStore.h"
+#import <UIKit/UIKit.h>
 #import <CoreBitcoin/CoreBitcoin+Categories.h>
-#import <CoreBitcoin/BTCChainCom.h>
+#import <CoreBitcoin/CoreBitcoin.h>
 
 #define CHAIN_ERROR_DOMAIN @"com.Chain.Chain-Wallet.ErrorDomain"
 
 @implementation CNBitcoinSendManager
 
 + (void)sendAmount:(BTCSatoshi)satoshiAmount receiveAddresss:(NSString *)receiveAddress fee:(BTCSatoshi)fee completionHandler:(void (^)(NSDictionary *dictionary, NSError *error))completionHandler {
-    
-    // Based on CoreBitcoin / CoreBitcoin / BTCTransaction+Tests.m
-    BTCPrivateKeyAddress *privateKeyAddress = [CNKeyManager privateKeyAddress];
-    BTCKey *key = privateKeyAddress.key;
+
+    __block BTCKey* key = nil;
+    __block NSError* error = nil;
+    [[CNSecretStore chainSecretStore] unlock:^(CNSecretStore *store) {
+        key = store.key;
+
+        if (!key) {
+            if (store.error && store.error.code != errSecUserCanceled) {
+                error = store.error;
+            }
+        }
+
+    } reason:NSLocalizedString(@"Authenticate to send Bitcoin", @"")];
+
+    if (!key) {
+        completionHandler(nil, error);
+        return;
+    }
+
     NSLog(@"Sending from Address: %@", [key.publicKeyAddress base58String]);
     
     [CNBitcoinSendManager sendFromPrivateKey:key to:[BTCPublicKeyAddress addressWithBase58String:receiveAddress] change:key.publicKeyAddress amount:satoshiAmount fee:fee completionHandler:^(BTCTransaction *transaction, NSError *error) {

@@ -7,7 +7,9 @@
 
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
+#import <CoreBitcoin/CoreBitcoin.h>
 
 @interface CNExportPKeyViewController : UIViewController <MFMessageComposeViewControllerDelegate, UIActionSheetDelegate>
 
+@property(nonatomic) BTCKey* privateKey;
 @end

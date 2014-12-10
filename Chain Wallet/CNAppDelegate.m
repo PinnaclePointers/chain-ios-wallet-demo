@@ -6,15 +6,16 @@
 //
 
 #import "CNAppDelegate.h"
-#import "CNKeyManager.h"
+#import "CNSecretStore.h"
 #import "Chain.h"
 #import "UIColor+Additions.h"
+#import <CoreBitcoin/CoreBitcoin.h>
 
 @implementation CNAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // REPLACE THIS LIMITED "GUEST-TOKEN" WITH YOUR API TOKEN FROM CHAIN.COM
-    [Chain sharedInstanceWithToken:@"GUEST-TOKEN"];
+    [Chain sharedInstanceWithToken:@"2277e102b5d28a90700ff3062a282228"];
     
     // REMOVE THIS LINE AFTER DEFINING YOUR API TOKEN
     NSLog(@"\n!!!\nYOU ARE USING A LIMITED GUEST TOKEN FOR THE CHAIN API. PLEASE VISIT CHAIN.COM AND REGISTER TO RECIEVE YOUR PERSONAL API TOKEN.\n!!!\n");
@@ -31,12 +32,16 @@
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     
     // Uncomment to test the welcome screen. Backup your private key first.
-//    [CNKeyManager resetKeyManager];
-    
+    if ((0)) {
+        [[CNSecretStore chainSecretStore] unlock:^(CNSecretStore *store) {
+            store.key = nil;
+        } reason:NSLocalizedString(@"Authorize removing the private key", @"")];
+    }
+
     // Show welcome screen if we haven't generated an address.
-    NSString *publicKey = [CNKeyManager getPublicKey];
+    BTCKey* pubkey = [CNSecretStore chainSecretStore].publicKey;
     UIViewController *viewController  = nil;
-    if (![publicKey length]) {
+    if (!pubkey) {
         viewController = [storyboard instantiateViewControllerWithIdentifier:@"welcomeViewController"];
     } else {
         viewController = [storyboard instantiateViewControllerWithIdentifier:@"transactionsNavigationController"];
