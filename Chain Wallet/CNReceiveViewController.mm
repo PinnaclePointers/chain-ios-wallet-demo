@@ -7,7 +7,8 @@
 
 #import "CNReceiveViewController.h"
 #import "QREncoder.h"
-#import "CNKeyManager.h"
+#import "CNSecretStore.h"
+#import <CoreBitcoin/CoreBitcoin.h>
 
 @interface CNReceiveViewController()
 @property (weak, nonatomic) IBOutlet UIImageView *QREncoderView;
@@ -18,10 +19,14 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.addressLabel setTitle:[CNKeyManager getPublicKey] forState:UIControlStateNormal];
+    [self.addressLabel setTitle:[self addressString] forState:UIControlStateNormal];
     self.addressLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
-    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[CNKeyManager getPublicKey]]
+    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[self addressString]]
                                      imageDimension:self.QREncoderView.frame.size.width];
+}
+
+- (NSString*) addressString {
+    return [CNSecretStore chainSecretStore].publicKey.publicKeyAddress.base58String;
 }
 
 - (IBAction)dismissReceiveView:(id)sender {
@@ -48,7 +53,7 @@
 
 - (void)copyToClipboard {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = [CNKeyManager getPublicKey];
+    pasteboard.string = [self addressString];
 }
 
 - (void)shareViaTextMessage {
@@ -60,7 +65,7 @@
     }
     
     //set message text
-    NSString *message = [NSString stringWithFormat:@"Send me Bitcoin, yo! Here's my address:\n\n%@", [CNKeyManager getPublicKey]];
+    NSString *message = [NSString stringWithFormat:@"Send me Bitcoin, yo! Here's my address:\n\n%@", [self addressString]];
     
     MFMessageComposeViewController *messageController = [[MFMessageComposeViewController alloc] init];
     messageController.messageComposeDelegate = self;

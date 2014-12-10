@@ -10,8 +10,7 @@
 #import "CNExportPKeyViewController.h"
 #import "CDZQRScanningViewController.h"
 #import "Chain.h"
-#import "CNKeyManager.h"
-#import "CNLocalAuthenication.h"
+#import "CNSecretStore.h"
 #import <CoreBitcoin/CoreBitcoin+Categories.h>
 #import "UIColor+Additions.h"
 #import "NSString+Additions.h"
@@ -24,7 +23,6 @@
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property NSArray *transactions;
 @property BTCSatoshi balance;
-@property (nonatomic) CNLocalAuthenication *localAuth;
 @property (weak, nonatomic) IBOutlet UIView *noTransactionsFooterView;
 @end
 
@@ -44,11 +42,6 @@
     
     [self updateBalanceAndTransactions];
     self.refreshTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(updateBalanceAndTransactions) userInfo:nil repeats:YES];
-    
-    if(![CNLocalAuthenication isTouchIDAvailable]) {
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"TouchID Required" message:@"TouchID is required to use Chain Wallet" delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil];
-        [alertView show];
-    }
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -60,7 +53,7 @@
     [super viewDidLoad];
     
     // Get the stored address before view loads.
-    self.address = [CNKeyManager getPublicKey];
+    self.address = [CNSecretStore chainSecretStore].publicKey.publicKeyAddress.base58String;
     
     self.transactions = [NSArray array];
     [self.tableView reloadData];
@@ -69,7 +62,7 @@
 #pragma mark - IB Actions
 
 - (IBAction)tapSendButton:(id)sender {
-    [self _authenticateWithTouchID];
+    [self _showSendMethodOptionSheet];
 }
 
 - (IBAction)tapOptionsButton:(id)sender {
@@ -161,13 +154,6 @@
     [actionSheet showInView:self.view];
 }
 
-#pragma mark - TouchID
-
-- (void)_authenticateWithTouchID {
-    [self.localAuth authenticateWithTouchID:@"Authenticate to send Bitcoin" successBlock:^{
-        [self _showSendMethodOptionSheet];
-    }];
-}
 
 #pragma mark - Send Action Sheet
 
@@ -207,10 +193,21 @@
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:strurl]];
         }
         if (buttonIndex == 2) {
-            [self.localAuth authenticateWithTouchID:@"Authenticate to export your private key." disableFallbackAuthWithReason:@"Private key export is only available with Touch ID" successBlock:^{
-                UINavigationController *exportNavigationController = [self.storyboard instantiateViewControllerWithIdentifier:@"exportNavController"];
-                [self presentViewController:exportNavigationController animated:YES completion:nil];
-            }];
+
+            [[CNSecretStore chainSecretStore] unlock:^id(CNSecretStore *store, NSError **errorOut) {
+                BTCKey* key = store.key;
+                if (!key) *errorOut = store.error;
+                return key;
+            } reason:NSLocalizedString(@"Authenticate to export your private key.", @"")
+                                     completionBlock:^(id result, NSError *error) {
+                                         BTCKey* key = result;
+                                         if (key) {
+                                             UINavigationController *exportNavigationController = [self.storyboard instantiateViewControllerWithIdentifier:@"exportNavController"];
+                                             CNExportPKeyViewController* evc = exportNavigationController.viewControllers.firstObject;
+                                             evc.privateKey = key;
+                                            [self presentViewController:exportNavigationController animated:YES completion:nil];
+                                         }
+                                     }];
         }
     }
 }
@@ -221,13 +218,6 @@
     CNSendViewController *svc = (CNSendViewController *)[sendNavigationController topViewController];
     [svc setSendToAddress:self.sendToAddress];
     [self presentViewController:sendNavigationController animated:YES completion:nil];
-}
-
-- (CNLocalAuthenication *)localAuth {
-    if (!_localAuth) {
-        _localAuth = [[CNLocalAuthenication alloc] init];
-    }
-    return _localAuth;
 }
 
 #pragma mark - UITableViewDataSource

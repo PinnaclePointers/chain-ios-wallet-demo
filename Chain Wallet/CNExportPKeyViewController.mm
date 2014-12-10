@@ -7,7 +7,7 @@
 
 #import "CNExportPKeyViewController.h"
 #import "QREncoder.h"
-#import "CNKeyManager.h"
+#import <CoreBitcoin/CoreBitcoin.h>
 
 @interface CNExportPKeyViewController()
 @property (weak, nonatomic) IBOutlet UIImageView *QREncoderView;
@@ -16,12 +16,15 @@
 
 @implementation CNExportPKeyViewController
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    [self.addressLabel setTitle:[CNKeyManager getPrivateKey] forState:UIControlStateNormal];
+- (void) viewWillAppear:(BOOL)animated {
+    [self.addressLabel setTitle:[self wifString] forState:UIControlStateNormal];
     self.addressLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
-    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[CNKeyManager getPrivateKey]]
-                                     imageDimension:self.QREncoderView.frame.size.width];
+    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[self wifString]]
+                                            imageDimension:self.QREncoderView.frame.size.width];
+}
+
+- (NSString*) wifString {
+    return self.privateKey.privateKeyAddress.base58String;
 }
 
 - (IBAction)dismissReceiveView:(id)sender {
@@ -48,7 +51,7 @@
 
 - (void)copyToClipboard {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = [CNKeyManager getPrivateKey];;
+    pasteboard.string = [self wifString];
 }
 
 - (void)shareViaTextMessage {
@@ -60,7 +63,7 @@
     }
     
     // Set message text
-    NSString *message = [NSString stringWithFormat:@"My Private Key:\n\n%@", [CNKeyManager getPrivateKey]];
+    NSString *message = [NSString stringWithFormat:@"My Private Key:\n\n%@", [self wifString]];
     
     MFMessageComposeViewController *messageController = [[MFMessageComposeViewController alloc] init];
     messageController.messageComposeDelegate = self;

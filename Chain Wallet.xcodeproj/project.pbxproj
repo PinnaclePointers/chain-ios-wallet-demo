@@ -16,12 +16,11 @@
 		004EA53B196CC3E30061A6B0 /* CNReceiveViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 004EA53A196CC3E30061A6B0 /* CNReceiveViewController.mm */; };
 		00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */; };
 		00C2DE311966248900278CB3 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C2DE301966248900278CB3 /* MessageUI.framework */; };
+		20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */; };
 		567B7A5D11694E0A8EDEDB42 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DBF0F8BEE9CE42109B86A0DA /* libPods.a */; };
 		C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */; };
-		C9639DBE19708D13000984E5 /* CNLocalAuthenication.m in Sources */ = {isa = PBXBuildFile; fileRef = C9639DBD19708D13000984E5 /* CNLocalAuthenication.m */; };
 		C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */; };
 		C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9A02FA31974984900680A53 /* UIColor+Additions.m */; };
-		C9B766F71964CDD700B278E9 /* CNKeyManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B766F61964CDD700B278E9 /* CNKeyManager.m */; };
 		C9B766FA1964CDDD00B278E9 /* KeychainItemWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B766F91964CDDD00B278E9 /* KeychainItemWrapper.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9DABA6319773205003965C6 /* NSString+Additions.m */; };
 /* End PBXBuildFile section */
@@ -55,17 +54,15 @@
 		00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNExportPKeyViewController.h; sourceTree = "<group>"; };
 		00C2DE301966248900278CB3 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSecretStore.h; sourceTree = "<group>"; };
+		20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSecretStore.m; sourceTree = "<group>"; };
 		C94D88F9196609AA009240BF /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
 		C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNBitcoinSendManager.h; sourceTree = "<group>"; };
 		C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNBitcoinSendManager.m; sourceTree = "<group>"; };
-		C9639DBC19708D13000984E5 /* CNLocalAuthenication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNLocalAuthenication.h; sourceTree = "<group>"; };
-		C9639DBD19708D13000984E5 /* CNLocalAuthenication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNLocalAuthenication.m; sourceTree = "<group>"; };
 		C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNWelcomeViewController.h; sourceTree = "<group>"; };
 		C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNWelcomeViewController.m; sourceTree = "<group>"; };
 		C9A02FA21974984900680A53 /* UIColor+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Additions.h"; sourceTree = "<group>"; };
 		C9A02FA31974984900680A53 /* UIColor+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Additions.m"; sourceTree = "<group>"; };
-		C9B766F51964CDD700B278E9 /* CNKeyManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNKeyManager.h; sourceTree = "<group>"; };
-		C9B766F61964CDD700B278E9 /* CNKeyManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNKeyManager.m; sourceTree = "<group>"; };
 		C9B766F81964CDDD00B278E9 /* KeychainItemWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeychainItemWrapper.h; sourceTree = "<group>"; };
 		C9B766F91964CDDD00B278E9 /* KeychainItemWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeychainItemWrapper.m; sourceTree = "<group>"; };
 		C9DABA6219773205003965C6 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
@@ -117,22 +114,20 @@
 			children = (
 				000BEB7819649F48008E2865 /* CNAppDelegate.h */,
 				000BEB7919649F48008E2865 /* CNAppDelegate.m */,
-				C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */,
-				C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */,
-				00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */,
-				00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */,
+				C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */,
+				C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */,
 				000BEB7B19649F48008E2865 /* CNHomeViewController.h */,
 				000BEB7C19649F48008E2865 /* CNHomeViewController.m */,
-				C9B766F51964CDD700B278E9 /* CNKeyManager.h */,
-				C9B766F61964CDD700B278E9 /* CNKeyManager.m */,
-				C9639DBC19708D13000984E5 /* CNLocalAuthenication.h */,
-				C9639DBD19708D13000984E5 /* CNLocalAuthenication.m */,
 				004EA539196CC3E30061A6B0 /* CNReceiveViewController.h */,
 				004EA53A196CC3E30061A6B0 /* CNReceiveViewController.mm */,
 				000BEB9719649FAD008E2865 /* CNSendViewController.h */,
 				000BEB9819649FAD008E2865 /* CNSendViewController.m */,
-				C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */,
-				C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */,
+				00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */,
+				00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */,
+				C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */,
+				C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */,
+				20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */,
+				20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */,
 				C939FC57196F0E7F009308EE /* External */,
 				000BEB8119649F48008E2865 /* Images.xcassets */,
 				000BEB7E19649F48008E2865 /* Main.storyboard */,
@@ -232,7 +227,12 @@
 				TargetAttributes = {
 					000BEB7019649F48008E2865 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = JSS4C444NR;
+						DevelopmentTeam = ZL6B2GJ7WA;
+						SystemCapabilities = {
+							com.apple.DataProtection = {
+								enabled = 0;
+							};
+						};
 					};
 					000BEB8619649F48008E2865 = {
 						CreatedOnToolsVersion = 6.0;
@@ -317,14 +317,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				000BEB9919649FAD008E2865 /* CNSendViewController.m in Sources */,
-				C9639DBE19708D13000984E5 /* CNLocalAuthenication.m in Sources */,
+				20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */,
 				C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */,
 				000BEB7D19649F48008E2865 /* CNHomeViewController.m in Sources */,
 				C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */,
 				C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */,
 				C9B766FA1964CDDD00B278E9 /* KeychainItemWrapper.m in Sources */,
 				C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */,
-				C9B766F71964CDD700B278E9 /* CNKeyManager.m in Sources */,
 				000BEB7A19649F48008E2865 /* CNAppDelegate.m in Sources */,
 				004EA53B196CC3E30061A6B0 /* CNReceiveViewController.mm in Sources */,
 				00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */,
@@ -443,10 +442,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = "Chain Wallet/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "Chain Wallet";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -456,10 +458,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = "Chain Wallet/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "Chain Wallet";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};
