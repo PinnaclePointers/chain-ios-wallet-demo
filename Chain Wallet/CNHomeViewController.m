@@ -261,19 +261,23 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *cellIdentifier = @"cell";
+    static NSString *cellIdentifier = @"transactionCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
-    
+
     BTCTransaction *tx = self.transactions[indexPath.row];
     
     // Pointers for Cell Values
     UILabel *amountLabel = (UILabel *)[cell.contentView viewWithTag:1];
     UILabel *addressLabel = (UILabel *)[cell.contentView viewWithTag:2];
     UILabel *dateLabel = (UILabel *)[cell.contentView viewWithTag:3];
+
+    NSAssert(amountLabel, @"sanity check");
+    NSAssert(addressLabel, @"sanity check");
+    NSAssert(dateLabel, @"sanity check");
 
     // Transaction Date Formatter
     NSString *localDateString = @"";
@@ -286,7 +290,7 @@
     }
     
     // Show Date (if confirmed) or 'Pending' (if not confirmed)
-    NSInteger transactionConfirmations = [[tx valueForKey:@"confirmations"] integerValue];
+    NSInteger transactionConfirmations = tx.confirmations;
     if (transactionConfirmations == 0) {
         dateLabel.text = @"Pending";
     } else {
@@ -403,15 +407,15 @@
     NSMutableString *addressString = [NSMutableString string];
     
     for (int i = 0; i < filteredAddresses.count; i++) {
-        NSString *address = [filteredAddresses objectAtIndex:i];
+        BTCAddress *address = [filteredAddresses objectAtIndex:i];
     
         // Truncate if we have more then one.
         if (filteredAddresses.count > 1) {
-            NSString *shortenedAddress = address;
-            shortenedAddress = [address substringToIndex:10];
+            NSString *shortenedAddress = address.string;
+            shortenedAddress = [shortenedAddress substringToIndex:10];
             [addressString appendFormat:@"%@…", shortenedAddress];
         } else {
-            [addressString appendFormat:@"%@", address];
+            [addressString appendFormat:@"%@", address.string];
         }
         
         // Add a comma and space if this is not the last
