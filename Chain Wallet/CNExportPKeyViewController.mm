@@ -6,7 +6,6 @@
 //
 
 #import "CNExportPKeyViewController.h"
-#import "QREncoder.h"
 #import <CoreBitcoin/CoreBitcoin.h>
 
 @interface CNExportPKeyViewController()
@@ -19,8 +18,7 @@
 - (void) viewWillAppear:(BOOL)animated {
     [self.addressLabel setTitle:[self wifString] forState:UIControlStateNormal];
     self.addressLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
-    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[self wifString]]
-                                            imageDimension:self.QREncoderView.frame.size.width];
+    self.QREncoderView.image = [BTCQRCode imageForString:[self wifString] size:self.QREncoderView.frame.size scale:2.0];
 }
 
 - (NSString*) wifString {

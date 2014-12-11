@@ -10,7 +10,7 @@
 
 @implementation NSString(Additions)
 
-+ (NSString *)stringWithSatoshiInBTCFormat:(BTCSatoshi)satoshiAmount {
++ (NSString *)stringWithSatoshiInBTCFormat:(BTCAmount)satoshiAmount {
     NSDecimalNumber *BTCValueDecimalNumber = [[NSDecimalNumber alloc] initWithLongLong:satoshiAmount];
     BTCValueDecimalNumber = [BTCValueDecimalNumber decimalNumberByDividingBy:[[NSDecimalNumber alloc] initWithLongLong:BTCCoin]];
     

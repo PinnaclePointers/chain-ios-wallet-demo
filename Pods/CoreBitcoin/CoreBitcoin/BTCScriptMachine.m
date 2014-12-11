@@ -1016,13 +1016,13 @@
                 BOOL failed = NO;
                 if (_verificationFlags & BTCScriptVerificationStrictEncoding)
                 {
-                    if (![BTCScript isCanonicalPublicKey:pubkeyData error:&sigerror])
+                    if (![BTCKey isCanonicalPublicKey:pubkeyData error:&sigerror])
                     {
                         failed = YES;
                     }
-                    if (!failed && ![BTCScript isCanonicalSignature:signature
-                                                        verifyEvenS:!!(_verificationFlags & BTCScriptVerificationEvenS)
-                                                              error:&sigerror])
+                    if (!failed && ![BTCKey isCanonicalSignatureWithHashType:signature
+                                                                 verifyLowerS:!!(_verificationFlags & BTCScriptVerificationEvenS)
+                                                                       error:&sigerror])
                     {
                         failed = YES;
                     }
@@ -1150,13 +1150,13 @@
                     NSError* sigerror = nil;
                     if (_verificationFlags & BTCScriptVerificationStrictEncoding)
                     {
-                        if (![BTCScript isCanonicalPublicKey:pubkeyData error:&sigerror])
+                        if (![BTCKey isCanonicalPublicKey:pubkeyData error:&sigerror])
                         {
                             validMatch = NO;
                         }
-                        if (validMatch && ![BTCScript isCanonicalSignature:signature
-                                                            verifyEvenS:!!(_verificationFlags & BTCScriptVerificationEvenS)
-                                                                  error:&sigerror])
+                        if (validMatch && ![BTCKey isCanonicalSignatureWithHashType:signature
+                                                                        verifyLowerS:!!(_verificationFlags & BTCScriptVerificationEvenS)
+                                                                              error:&sigerror])
                         {
                             validMatch = NO;
                         }
@@ -1189,7 +1189,7 @@
                 // Remove all signatures, counts and pubkeys from stack.
                 // Note: 'i' points past the signatures. Due to postfix decrement (i--) this loop will pop one extra item from the stack.
                 // We can't change this code to use prefix decrement (--i) until every node does the same.
-                // So when redeeming multisig scripts one has to prepend signatures with a dummy OP_0 item for it to be popped here.
+                // This means that to redeem multisig script you have to prepend a dummy OP_0 item before all signatures so it can be popped here.
                 while (i-- > 0)
                 {
                     [self popFromStack];
@@ -1237,7 +1237,7 @@
     if (!pubkey)
     {
         if (errorOut) *errorOut = [self scriptError:[NSString stringWithFormat:NSLocalizedString(@"Public key is not valid: %@.", @""),
-                                                     BTCHexStringFromData(pubkeyData)]];
+                                                     BTCHexFromData(pubkeyData)]];
         return NO;
     }
     
@@ -1256,7 +1256,7 @@
     
     NSData* sighash = [_transaction signatureHashForScript:subscript inputIndex:_inputIndex hashType:hashType error:errorOut];
     
-    //NSLog(@"BTCScriptMachine: Hash for input %d [%d]: %@", _inputIndex, hashType, BTCHexStringFromData(sighash));
+    //NSLog(@"BTCScriptMachine: Hash for input %d [%d]: %@", _inputIndex, hashType, BTCHexFromData(sighash));
     
     if (!sighash)
     {

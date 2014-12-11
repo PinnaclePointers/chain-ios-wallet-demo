@@ -2,16 +2,19 @@
 
 #import "BTCTransaction.h"
 #import "BTCTransactionInput.h"
+#import "BTCTransactionOutput.h"
 #import "BTCScript.h"
 #import "BTCProtocolSerialization.h"
 #import "BTCData.h"
+#import "BTCHashID.h"
+#import "BTCOutpoint.h"
 
 @interface BTCTransactionInput ()
-@property(nonatomic, readwrite) NSData* data;
 @end
 
 static const uint32_t BTCInvalidIndex = 0xFFFFFFFF; // aka "(unsigned int) -1" in BitcoinQT.
 static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
+
 
 @implementation BTCTransactionInput
 
@@ -23,6 +26,7 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
         _previousIndex = BTCInvalidIndex;
         _signatureScript = [[BTCScript alloc] init];
         _sequence = BTCMaxSequence; // max
+        _value = -1;
     }
     return self;
 }
@@ -53,13 +57,13 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
     if (self = [self init])
     {
         NSString* prevHashString = (dictionary[@"prev_out"] ?: @{})[@"hash"];
-        if (prevHashString) _previousHash = BTCReversedData(BTCDataWithHexString(prevHashString));
+        if (prevHashString) _previousHash = BTCReversedData(BTCDataFromHex(prevHashString));
         NSNumber* prevIndexNumber = (dictionary[@"prev_out"] ?: @{})[@"n"];
         if (prevIndexNumber) _previousIndex = prevIndexNumber.unsignedIntValue;
         
         if (dictionary[@"coinbase"])
         {
-            _signatureScript = [[BTCScript alloc] initWithData:BTCDataWithHexString(dictionary[@"coinbase"])];
+            _coinbaseData = BTCDataFromHex(dictionary[@"coinbase"]);
         }
         else
         {
@@ -74,7 +78,7 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
             {
                 if (scriptSig[@"hex"])
                 {
-                    _signatureScript = [[BTCScript alloc] initWithData:BTCDataWithHexString(scriptSig[@"hex"])];
+                    _signatureScript = [[BTCScript alloc] initWithData:BTCDataFromHex(scriptSig[@"hex"])];
                 }
                 else if (scriptSig[@"asm"])
                 {
@@ -102,18 +106,17 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
     txin.previousIndex = self.previousIndex;
     txin.signatureScript = [self.signatureScript copy];
     txin.sequence = self.sequence;
-    txin.data = [self.data copy];
+
+    txin.transaction = _transaction;
+    txin.transactionOutput = _transactionOutput;
+    txin.userInfo = _userInfo;
+
     return txin;
 }
 
 - (NSData*) data
 {
     return [self computePayload];
-//    if (!_data)
-//    {
-//        _data = [self computePayload];
-//    }
-//    return _data;
 }
 
 - (NSData*) computePayload
@@ -122,62 +125,62 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
     
     [payload appendData:_previousHash];
     [payload appendBytes:&_previousIndex length:4];
-    
-    NSData* scriptData = _signatureScript.data;
-    [payload appendData:[BTCProtocolSerialization dataForVarInt:scriptData.length]];
-    [payload appendData:scriptData];
+
+    if (self.isCoinbase)
+    {
+        [payload appendData:[BTCProtocolSerialization dataForVarInt:self.coinbaseData.length]];
+        [payload appendData:self.coinbaseData];
+    }
+    else
+    {
+        NSData* scriptData = _signatureScript.data;
+        [payload appendData:[BTCProtocolSerialization dataForVarInt:scriptData.length]];
+        [payload appendData:scriptData];
+    }
     
     [payload appendBytes:&_sequence length:4];
     
     return payload;
 }
 
-- (void) invalidatePayload
+- (BTCOutpoint*) outpoint
 {
-    _data = nil;
-    [_transaction invalidatePayload];
+    return [[BTCOutpoint alloc] initWithHash:self.previousHash index:self.previousIndex];
 }
 
-- (void) setPreviousHash:(NSData *)previousHash
+- (void) setOutpoint:(BTCOutpoint *)outpoint
 {
-    if (_previousHash == previousHash) return;
-    _previousHash = previousHash;
-    [self invalidatePayload];
+    self.previousHash = outpoint.txHash;
+    self.previousIndex = outpoint.index;
 }
 
-- (void) setPreviousIndex:(uint32_t)previousIndex
+- (NSString*) previousTransactionID
 {
-    if (_previousIndex == previousIndex) return;
-    _previousIndex = previousIndex;
-    [self invalidatePayload];
+    return BTCIDFromHash(self.previousHash);
 }
 
-- (void) setSignatureScript:(BTCScript *)signatureScript
+- (void) setPreviousTransactionID:(NSString *)previousTransactionID
 {
-    if (_signatureScript == signatureScript) return;
-    _signatureScript = signatureScript;
-    [self invalidatePayload];
-}
-
-- (void) setSequence:(uint32_t)sequence
-{
-    if (_sequence == sequence) return;
-    _sequence = sequence;
-    [self invalidatePayload];
+    self.previousHash = BTCHashFromID(previousTransactionID);
 }
 
 // Returns a dictionary representation suitable for encoding in JSON or Plist.
 - (NSDictionary*) dictionaryRepresentation
 {
+    return self.dictionary;
+}
+
+- (NSDictionary*) dictionary
+{
     NSMutableDictionary* dict = [NSMutableDictionary dictionary];
     dict[@"prev_out"] = @{
-                        @"hash": BTCHexStringFromData(BTCReversedData(_previousHash)), // transaction hashes are reversed
+                        @"hash": BTCHexFromData(BTCReversedData(_previousHash)), // transaction hashes are reversed
                         @"n": @(_previousIndex),
                         };
     
     if ([self isCoinbase])
     {
-        dict[@"coinbase"] = BTCHexStringFromData(_signatureScript.data);
+        dict[@"coinbase"] = BTCHexFromData(_coinbaseData);
     }
     else
     {
@@ -230,9 +233,17 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
     if ([stream read:(uint8_t*)(&_previousIndex) maxLength:sizeof(_previousIndex)] != sizeof(_previousIndex)) return NO;
     
     // Read signature script
-    NSData* signatureScriptData = [BTCProtocolSerialization readVarStringFromStream:stream];
-    if (!signatureScriptData) return NO;
-    _signatureScript = [[BTCScript alloc] initWithData:signatureScriptData];
+    NSData* scriptdata = [BTCProtocolSerialization readVarStringFromStream:stream];
+    if (!scriptdata) return NO;
+
+    if ([self isCoinbase])
+    {
+        _coinbaseData = scriptdata;
+    }
+    else
+    {
+        _signatureScript = [[BTCScript alloc] initWithData:scriptdata];
+    }
     
     // Read sequence
     if ([stream read:(uint8_t*)(&_sequence) maxLength:sizeof(_sequence)] != sizeof(_sequence)) return NO;
@@ -249,4 +260,22 @@ static const uint32_t BTCMaxSequence = 0xFFFFFFFF;
 }
 
 
+
+#pragma mark - Informational Properties
+
+
+
+- (BTCAmount) value
+{
+    if (_value != -1) {
+        return _value;
+    }
+    if (_transactionOutput) {
+        return _transactionOutput.value;
+    }
+    return -1;
+}
+
+
 @end
+

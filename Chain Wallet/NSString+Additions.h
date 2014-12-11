@@ -10,6 +10,6 @@
 
 @interface NSString(Additions)
 
-+ (NSString *)stringWithSatoshiInBTCFormat:(BTCSatoshi)satoshiAmount;
++ (NSString *)stringWithSatoshiInBTCFormat:(BTCAmount)satoshiAmount DEPRECATED_ATTRIBUTE;
 
 @end

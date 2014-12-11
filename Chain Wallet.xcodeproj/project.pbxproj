@@ -1,530 +1,1256 @@
-// !$*UTF8*$!
-{
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 46;
-	objects = {
-
-/* Begin PBXBuildFile section */
-		000BEB7719649F48008E2865 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 000BEB7619649F48008E2865 /* main.m */; };
-		000BEB7A19649F48008E2865 /* CNAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 000BEB7919649F48008E2865 /* CNAppDelegate.m */; };
-		000BEB7D19649F48008E2865 /* CNHomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 000BEB7C19649F48008E2865 /* CNHomeViewController.m */; };
-		000BEB8019649F48008E2865 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 000BEB7E19649F48008E2865 /* Main.storyboard */; };
-		000BEB8219649F48008E2865 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000BEB8119649F48008E2865 /* Images.xcassets */; };
-		000BEB9919649FAD008E2865 /* CNSendViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 000BEB9819649FAD008E2865 /* CNSendViewController.m */; };
-		004EA53B196CC3E30061A6B0 /* CNReceiveViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 004EA53A196CC3E30061A6B0 /* CNReceiveViewController.mm */; };
-		00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */; };
-		00C2DE311966248900278CB3 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C2DE301966248900278CB3 /* MessageUI.framework */; };
-		20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */; };
-		20C6D3C21A38C259000E04C6 /* CNLaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */; };
-		567B7A5D11694E0A8EDEDB42 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DBF0F8BEE9CE42109B86A0DA /* libPods.a */; };
-		C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */; };
-		C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */; };
-		C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9A02FA31974984900680A53 /* UIColor+Additions.m */; };
-		C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9DABA6319773205003965C6 /* NSString+Additions.m */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		000BEB8819649F48008E2865 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 000BEB6919649F48008E2865 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 000BEB7019649F48008E2865;
-			remoteInfo = "Chain Wallet Demo";
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXFileReference section */
-		000BEB7119649F48008E2865 /* Chain Wallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Chain Wallet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		000BEB7519649F48008E2865 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Chain Wallet/Info.plist"; sourceTree = SOURCE_ROOT; };
-		000BEB7619649F48008E2865 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		000BEB7819649F48008E2865 /* CNAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CNAppDelegate.h; sourceTree = "<group>"; };
-		000BEB7919649F48008E2865 /* CNAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CNAppDelegate.m; sourceTree = "<group>"; };
-		000BEB7B19649F48008E2865 /* CNHomeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CNHomeViewController.h; sourceTree = "<group>"; };
-		000BEB7C19649F48008E2865 /* CNHomeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CNHomeViewController.m; sourceTree = "<group>"; };
-		000BEB7F19649F48008E2865 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		000BEB8119649F48008E2865 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		000BEB8719649F48008E2865 /* Chain WalletTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Chain WalletTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		000BEB9719649FAD008E2865 /* CNSendViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSendViewController.h; sourceTree = "<group>"; };
-		000BEB9819649FAD008E2865 /* CNSendViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSendViewController.m; sourceTree = "<group>"; };
-		004EA539196CC3E30061A6B0 /* CNReceiveViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNReceiveViewController.h; sourceTree = "<group>"; };
-		004EA53A196CC3E30061A6B0 /* CNReceiveViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CNReceiveViewController.mm; sourceTree = "<group>"; };
-		00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CNExportPKeyViewController.mm; sourceTree = "<group>"; };
-		00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNExportPKeyViewController.h; sourceTree = "<group>"; };
-		00C2DE301966248900278CB3 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
-		10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
-		20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSecretStore.h; sourceTree = "<group>"; };
-		20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSecretStore.m; sourceTree = "<group>"; };
-		20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CNLaunchScreen.xib; sourceTree = "<group>"; };
-		C94D88F9196609AA009240BF /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
-		C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNBitcoinSendManager.h; sourceTree = "<group>"; };
-		C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNBitcoinSendManager.m; sourceTree = "<group>"; };
-		C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNWelcomeViewController.h; sourceTree = "<group>"; };
-		C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNWelcomeViewController.m; sourceTree = "<group>"; };
-		C9A02FA21974984900680A53 /* UIColor+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Additions.h"; sourceTree = "<group>"; };
-		C9A02FA31974984900680A53 /* UIColor+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Additions.m"; sourceTree = "<group>"; };
-		C9DABA6219773205003965C6 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
-		C9DABA6319773205003965C6 /* NSString+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Additions.m"; sourceTree = "<group>"; };
-		DBF0F8BEE9CE42109B86A0DA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		000BEB6E19649F48008E2865 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				00C2DE311966248900278CB3 /* MessageUI.framework in Frameworks */,
-				567B7A5D11694E0A8EDEDB42 /* libPods.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		000BEB8419649F48008E2865 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		000BEB6819649F48008E2865 = {
-			isa = PBXGroup;
-			children = (
-				000BEB7319649F48008E2865 /* Chain Wallet */,
-				000BEB7219649F48008E2865 /* Products */,
-				10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */,
-				944EA322EFE44F0CB010FD06 /* Frameworks */,
-			);
-			sourceTree = "<group>";
-		};
-		000BEB7219649F48008E2865 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				000BEB7119649F48008E2865 /* Chain Wallet.app */,
-				000BEB8719649F48008E2865 /* Chain WalletTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		000BEB7319649F48008E2865 /* Chain Wallet */ = {
-			isa = PBXGroup;
-			children = (
-				000BEB7819649F48008E2865 /* CNAppDelegate.h */,
-				000BEB7919649F48008E2865 /* CNAppDelegate.m */,
-				C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */,
-				C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */,
-				000BEB7B19649F48008E2865 /* CNHomeViewController.h */,
-				000BEB7C19649F48008E2865 /* CNHomeViewController.m */,
-				004EA539196CC3E30061A6B0 /* CNReceiveViewController.h */,
-				004EA53A196CC3E30061A6B0 /* CNReceiveViewController.mm */,
-				000BEB9719649FAD008E2865 /* CNSendViewController.h */,
-				000BEB9819649FAD008E2865 /* CNSendViewController.m */,
-				00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */,
-				00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */,
-				C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */,
-				C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */,
-				20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */,
-				20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */,
-				C9A02FA11974981A00680A53 /* Additions */,
-				000BEB8119649F48008E2865 /* Images.xcassets */,
-				000BEB7E19649F48008E2865 /* Main.storyboard */,
-				20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */,
-				000BEB7419649F48008E2865 /* Supporting Files */,
-			);
-			path = "Chain Wallet";
-			sourceTree = "<group>";
-		};
-		000BEB7419649F48008E2865 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				000BEB7519649F48008E2865 /* Info.plist */,
-				000BEB7619649F48008E2865 /* main.m */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		944EA322EFE44F0CB010FD06 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				00C2DE301966248900278CB3 /* MessageUI.framework */,
-				C94D88F9196609AA009240BF /* LocalAuthentication.framework */,
-				DBF0F8BEE9CE42109B86A0DA /* libPods.a */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		C9A02FA11974981A00680A53 /* Additions */ = {
-			isa = PBXGroup;
-			children = (
-				C9DABA6219773205003965C6 /* NSString+Additions.h */,
-				C9DABA6319773205003965C6 /* NSString+Additions.m */,
-				C9A02FA21974984900680A53 /* UIColor+Additions.h */,
-				C9A02FA31974984900680A53 /* UIColor+Additions.m */,
-			);
-			name = Additions;
-			sourceTree = "<group>";
-		};
-/* End PBXGroup section */
-
-/* Begin PBXNativeTarget section */
-		000BEB7019649F48008E2865 /* Chain Wallet */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 000BEB9119649F48008E2865 /* Build configuration list for PBXNativeTarget "Chain Wallet" */;
-			buildPhases = (
-				06CC7834687D4DF38B353503 /* Check Pods Manifest.lock */,
-				000BEB6D19649F48008E2865 /* Sources */,
-				000BEB6E19649F48008E2865 /* Frameworks */,
-				000BEB6F19649F48008E2865 /* Resources */,
-				F1A86FE9AE5D40868EAFE46F /* Copy Pods Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "Chain Wallet";
-			productName = "Chain Wallet Demo";
-			productReference = 000BEB7119649F48008E2865 /* Chain Wallet.app */;
-			productType = "com.apple.product-type.application";
-		};
-		000BEB8619649F48008E2865 /* Chain WalletTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 000BEB9419649F48008E2865 /* Build configuration list for PBXNativeTarget "Chain WalletTests" */;
-			buildPhases = (
-				000BEB8319649F48008E2865 /* Sources */,
-				000BEB8419649F48008E2865 /* Frameworks */,
-				000BEB8519649F48008E2865 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				000BEB8919649F48008E2865 /* PBXTargetDependency */,
-			);
-			name = "Chain WalletTests";
-			productName = "Chain Wallet DemoTests";
-			productReference = 000BEB8719649F48008E2865 /* Chain WalletTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		000BEB6919649F48008E2865 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				LastUpgradeCheck = 0600;
-				ORGANIZATIONNAME = "Chain Inc.";
-				TargetAttributes = {
-					000BEB7019649F48008E2865 = {
-						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = ZL6B2GJ7WA;
-						SystemCapabilities = {
-							com.apple.DataProtection = {
-								enabled = 0;
-							};
-						};
-					};
-					000BEB8619649F48008E2865 = {
-						CreatedOnToolsVersion = 6.0;
-						TestTargetID = 000BEB7019649F48008E2865;
-					};
-				};
-			};
-			buildConfigurationList = 000BEB6C19649F48008E2865 /* Build configuration list for PBXProject "Chain Wallet" */;
-			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-			);
-			mainGroup = 000BEB6819649F48008E2865;
-			productRefGroup = 000BEB7219649F48008E2865 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				000BEB7019649F48008E2865 /* Chain Wallet */,
-				000BEB8619649F48008E2865 /* Chain WalletTests */,
-			);
-		};
-/* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		000BEB6F19649F48008E2865 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				000BEB8019649F48008E2865 /* Main.storyboard in Resources */,
-				000BEB8219649F48008E2865 /* Images.xcassets in Resources */,
-				20C6D3C21A38C259000E04C6 /* CNLaunchScreen.xib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		000BEB8519649F48008E2865 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		06CC7834687D4DF38B353503 /* Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Check Pods Manifest.lock";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
-			showEnvVarsInLog = 0;
-		};
-		F1A86FE9AE5D40868EAFE46F /* Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		000BEB6D19649F48008E2865 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				000BEB9919649FAD008E2865 /* CNSendViewController.m in Sources */,
-				20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */,
-				C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */,
-				000BEB7D19649F48008E2865 /* CNHomeViewController.m in Sources */,
-				C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */,
-				C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */,
-				C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */,
-				000BEB7A19649F48008E2865 /* CNAppDelegate.m in Sources */,
-				004EA53B196CC3E30061A6B0 /* CNReceiveViewController.mm in Sources */,
-				00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */,
-				000BEB7719649F48008E2865 /* main.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		000BEB8319649F48008E2865 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		000BEB8919649F48008E2865 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 000BEB7019649F48008E2865 /* Chain Wallet */;
-			targetProxy = 000BEB8819649F48008E2865 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		000BEB7E19649F48008E2865 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				000BEB7F19649F48008E2865 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
-/* Begin XCBuildConfiguration section */
-		000BEB8F19649F48008E2865 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				COPY_PHASE_STRIP = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				METAL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-			};
-			name = Debug;
-		};
-		000BEB9019649F48008E2865 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				COPY_PHASE_STRIP = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				METAL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = iphoneos;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		000BEB9219649F48008E2865 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				INFOPLIST_FILE = "Chain Wallet/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_NAME = "Chain Wallet";
-				PROVISIONING_PROFILE = "";
-			};
-			name = Debug;
-		};
-		000BEB9319649F48008E2865 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 10DE1BD2931A4AE8932DD92A /* Pods.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				INFOPLIST_FILE = "Chain Wallet/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_NAME = "Chain Wallet";
-				PROVISIONING_PROFILE = "";
-			};
-			name = Release;
-		};
-		000BEB9519649F48008E2865 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Chain Wallet Demo.app/Chain Wallet Demo";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-				);
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "Chain Wallet DemoTests/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				METAL_ENABLE_DEBUG_INFO = YES;
-				PRODUCT_NAME = "Chain WalletTests";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-			};
-			name = Debug;
-		};
-		000BEB9619649F48008E2865 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Chain Wallet Demo.app/Chain Wallet Demo";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "Chain Wallet DemoTests/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				METAL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_NAME = "Chain WalletTests";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-			};
-			name = Release;
-		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		000BEB6C19649F48008E2865 /* Build configuration list for PBXProject "Chain Wallet" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				000BEB8F19649F48008E2865 /* Debug */,
-				000BEB9019649F48008E2865 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		000BEB9119649F48008E2865 /* Build configuration list for PBXNativeTarget "Chain Wallet" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				000BEB9219649F48008E2865 /* Debug */,
-				000BEB9319649F48008E2865 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		000BEB9419649F48008E2865 /* Build configuration list for PBXNativeTarget "Chain WalletTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				000BEB9519649F48008E2865 /* Debug */,
-				000BEB9619649F48008E2865 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-/* End XCConfigurationList section */
-	};
-	rootObject = 000BEB6919649F48008E2865 /* Project object */;
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>archiveVersion</key>
+	<string>1</string>
+	<key>classes</key>
+	<dict/>
+	<key>objectVersion</key>
+	<string>46</string>
+	<key>objects</key>
+	<dict>
+		<key>000BEB6819649F48008E2865</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>000BEB7319649F48008E2865</string>
+				<string>000BEB7219649F48008E2865</string>
+				<string>944EA322EFE44F0CB010FD06</string>
+				<string>825E4D12384C1F8C1303A83E</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB6919649F48008E2865</key>
+		<dict>
+			<key>attributes</key>
+			<dict>
+				<key>LastUpgradeCheck</key>
+				<string>0600</string>
+				<key>ORGANIZATIONNAME</key>
+				<string>Chain Inc.</string>
+				<key>TargetAttributes</key>
+				<dict>
+					<key>000BEB7019649F48008E2865</key>
+					<dict>
+						<key>CreatedOnToolsVersion</key>
+						<string>6.0</string>
+						<key>DevelopmentTeam</key>
+						<string>ZL6B2GJ7WA</string>
+						<key>SystemCapabilities</key>
+						<dict>
+							<key>com.apple.DataProtection</key>
+							<dict>
+								<key>enabled</key>
+								<string>0</string>
+							</dict>
+						</dict>
+					</dict>
+					<key>000BEB8619649F48008E2865</key>
+					<dict>
+						<key>CreatedOnToolsVersion</key>
+						<string>6.0</string>
+						<key>TestTargetID</key>
+						<string>000BEB7019649F48008E2865</string>
+					</dict>
+				</dict>
+			</dict>
+			<key>buildConfigurationList</key>
+			<string>000BEB6C19649F48008E2865</string>
+			<key>compatibilityVersion</key>
+			<string>Xcode 3.2</string>
+			<key>developmentRegion</key>
+			<string>English</string>
+			<key>hasScannedForEncodings</key>
+			<string>0</string>
+			<key>isa</key>
+			<string>PBXProject</string>
+			<key>knownRegions</key>
+			<array>
+				<string>en</string>
+				<string>Base</string>
+			</array>
+			<key>mainGroup</key>
+			<string>000BEB6819649F48008E2865</string>
+			<key>productRefGroup</key>
+			<string>000BEB7219649F48008E2865</string>
+			<key>projectDirPath</key>
+			<string></string>
+			<key>projectReferences</key>
+			<array/>
+			<key>projectRoot</key>
+			<string></string>
+			<key>targets</key>
+			<array>
+				<string>000BEB7019649F48008E2865</string>
+				<string>000BEB8619649F48008E2865</string>
+			</array>
+		</dict>
+		<key>000BEB6C19649F48008E2865</key>
+		<dict>
+			<key>buildConfigurations</key>
+			<array>
+				<string>000BEB8F19649F48008E2865</string>
+				<string>000BEB9019649F48008E2865</string>
+			</array>
+			<key>defaultConfigurationIsVisible</key>
+			<string>0</string>
+			<key>defaultConfigurationName</key>
+			<string>Release</string>
+			<key>isa</key>
+			<string>XCConfigurationList</string>
+		</dict>
+		<key>000BEB6D19649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array>
+				<string>000BEB9919649FAD008E2865</string>
+				<string>20C6D3BD1A37AC1F000E04C6</string>
+				<string>C97A877A19705FE0006EE6EA</string>
+				<string>000BEB7D19649F48008E2865</string>
+				<string>C94D88FD19661B73009240BF</string>
+				<string>C9A02FA41974984900680A53</string>
+				<string>C9DABA6419773205003965C6</string>
+				<string>000BEB7A19649F48008E2865</string>
+				<string>004EA53B196CC3E30061A6B0</string>
+				<string>00B50AD6196F27510066A0A5</string>
+				<string>000BEB7719649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXSourcesBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB6E19649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array>
+				<string>00C2DE311966248900278CB3</string>
+				<string>567B7A5D11694E0A8EDEDB42</string>
+			</array>
+			<key>isa</key>
+			<string>PBXFrameworksBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB6F19649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array>
+				<string>000BEB8019649F48008E2865</string>
+				<string>000BEB8219649F48008E2865</string>
+				<string>20C6D3C21A38C259000E04C6</string>
+			</array>
+			<key>isa</key>
+			<string>PBXResourcesBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB7019649F48008E2865</key>
+		<dict>
+			<key>buildConfigurationList</key>
+			<string>000BEB9119649F48008E2865</string>
+			<key>buildPhases</key>
+			<array>
+				<string>06CC7834687D4DF38B353503</string>
+				<string>000BEB6D19649F48008E2865</string>
+				<string>000BEB6E19649F48008E2865</string>
+				<string>000BEB6F19649F48008E2865</string>
+				<string>F1A86FE9AE5D40868EAFE46F</string>
+			</array>
+			<key>buildRules</key>
+			<array/>
+			<key>dependencies</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXNativeTarget</string>
+			<key>name</key>
+			<string>Chain Wallet</string>
+			<key>productName</key>
+			<string>Chain Wallet Demo</string>
+			<key>productReference</key>
+			<string>000BEB7119649F48008E2865</string>
+			<key>productType</key>
+			<string>com.apple.product-type.application</string>
+		</dict>
+		<key>000BEB7119649F48008E2865</key>
+		<dict>
+			<key>explicitFileType</key>
+			<string>wrapper.application</string>
+			<key>includeInIndex</key>
+			<string>0</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>path</key>
+			<string>Chain Wallet.app</string>
+			<key>sourceTree</key>
+			<string>BUILT_PRODUCTS_DIR</string>
+		</dict>
+		<key>000BEB7219649F48008E2865</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>000BEB7119649F48008E2865</string>
+				<string>000BEB8719649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Products</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7319649F48008E2865</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>000BEB7819649F48008E2865</string>
+				<string>000BEB7919649F48008E2865</string>
+				<string>C97A877819705FE0006EE6EA</string>
+				<string>C97A877919705FE0006EE6EA</string>
+				<string>000BEB7B19649F48008E2865</string>
+				<string>000BEB7C19649F48008E2865</string>
+				<string>004EA539196CC3E30061A6B0</string>
+				<string>004EA53A196CC3E30061A6B0</string>
+				<string>000BEB9719649FAD008E2865</string>
+				<string>000BEB9819649FAD008E2865</string>
+				<string>00B50AD5196F27510066A0A5</string>
+				<string>00B50AD4196F27510066A0A5</string>
+				<string>C94D88FB19661B73009240BF</string>
+				<string>C94D88FC19661B73009240BF</string>
+				<string>20C6D3BB1A37AC1F000E04C6</string>
+				<string>20C6D3BC1A37AC1F000E04C6</string>
+				<string>C9A02FA11974981A00680A53</string>
+				<string>000BEB8119649F48008E2865</string>
+				<string>000BEB7E19649F48008E2865</string>
+				<string>20C6D3C11A38C259000E04C6</string>
+				<string>000BEB7419649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>path</key>
+			<string>Chain Wallet</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7419649F48008E2865</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>000BEB7519649F48008E2865</string>
+				<string>000BEB7619649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Supporting Files</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7519649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>text.plist.xml</string>
+			<key>name</key>
+			<string>Info.plist</string>
+			<key>path</key>
+			<string>Chain Wallet/Info.plist</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
+		</dict>
+		<key>000BEB7619649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>main.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7719649F48008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB7619649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>000BEB7819649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNAppDelegate.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7919649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNAppDelegate.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7A19649F48008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB7919649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>000BEB7B19649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNHomeViewController.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7C19649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNHomeViewController.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7D19649F48008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB7C19649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>000BEB7E19649F48008E2865</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>000BEB7F19649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXVariantGroup</string>
+			<key>name</key>
+			<string>Main.storyboard</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB7F19649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>file.storyboard</string>
+			<key>name</key>
+			<string>Base</string>
+			<key>path</key>
+			<string>Base.lproj/Main.storyboard</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB8019649F48008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB7E19649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>000BEB8119649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>folder.assetcatalog</string>
+			<key>path</key>
+			<string>Images.xcassets</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB8219649F48008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB8119649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>000BEB8319649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXSourcesBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB8419649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXFrameworksBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB8519649F48008E2865</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXResourcesBuildPhase</string>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+		</dict>
+		<key>000BEB8619649F48008E2865</key>
+		<dict>
+			<key>buildConfigurationList</key>
+			<string>000BEB9419649F48008E2865</string>
+			<key>buildPhases</key>
+			<array>
+				<string>000BEB8319649F48008E2865</string>
+				<string>000BEB8419649F48008E2865</string>
+				<string>000BEB8519649F48008E2865</string>
+			</array>
+			<key>buildRules</key>
+			<array/>
+			<key>dependencies</key>
+			<array>
+				<string>000BEB8919649F48008E2865</string>
+			</array>
+			<key>isa</key>
+			<string>PBXNativeTarget</string>
+			<key>name</key>
+			<string>Chain WalletTests</string>
+			<key>productName</key>
+			<string>Chain Wallet DemoTests</string>
+			<key>productReference</key>
+			<string>000BEB8719649F48008E2865</string>
+			<key>productType</key>
+			<string>com.apple.product-type.bundle.unit-test</string>
+		</dict>
+		<key>000BEB8719649F48008E2865</key>
+		<dict>
+			<key>explicitFileType</key>
+			<string>wrapper.cfbundle</string>
+			<key>includeInIndex</key>
+			<string>0</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>path</key>
+			<string>Chain WalletTests.xctest</string>
+			<key>sourceTree</key>
+			<string>BUILT_PRODUCTS_DIR</string>
+		</dict>
+		<key>000BEB8819649F48008E2865</key>
+		<dict>
+			<key>containerPortal</key>
+			<string>000BEB6919649F48008E2865</string>
+			<key>isa</key>
+			<string>PBXContainerItemProxy</string>
+			<key>proxyType</key>
+			<string>1</string>
+			<key>remoteGlobalIDString</key>
+			<string>000BEB7019649F48008E2865</string>
+			<key>remoteInfo</key>
+			<string>Chain Wallet Demo</string>
+		</dict>
+		<key>000BEB8919649F48008E2865</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXTargetDependency</string>
+			<key>target</key>
+			<string>000BEB7019649F48008E2865</string>
+			<key>targetProxy</key>
+			<string>000BEB8819649F48008E2865</string>
+		</dict>
+		<key>000BEB8F19649F48008E2865</key>
+		<dict>
+			<key>buildSettings</key>
+			<dict>
+				<key>ALWAYS_SEARCH_USER_PATHS</key>
+				<string>NO</string>
+				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
+				<string>gnu++0x</string>
+				<key>CLANG_CXX_LIBRARY</key>
+				<string>libc++</string>
+				<key>CLANG_ENABLE_MODULES</key>
+				<string>YES</string>
+				<key>CLANG_ENABLE_OBJC_ARC</key>
+				<string>YES</string>
+				<key>CLANG_WARN_BOOL_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_CONSTANT_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
+				<string>YES_ERROR</string>
+				<key>CLANG_WARN_EMPTY_BODY</key>
+				<string>YES</string>
+				<key>CLANG_WARN_ENUM_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_INT_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
+				<string>YES_ERROR</string>
+				<key>CLANG_WARN_UNREACHABLE_CODE</key>
+				<string>YES</string>
+				<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
+				<string>YES</string>
+				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
+				<string>iPhone Developer</string>
+				<key>COPY_PHASE_STRIP</key>
+				<string>NO</string>
+				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
+				<string>YES</string>
+				<key>GCC_C_LANGUAGE_STANDARD</key>
+				<string>gnu99</string>
+				<key>GCC_DYNAMIC_NO_PIC</key>
+				<string>NO</string>
+				<key>GCC_OPTIMIZATION_LEVEL</key>
+				<string>0</string>
+				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
+				<array>
+					<string>DEBUG=1</string>
+					<string>$(inherited)</string>
+				</array>
+				<key>GCC_SYMBOLS_PRIVATE_EXTERN</key>
+				<string>NO</string>
+				<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
+				<string>YES</string>
+				<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
+				<string>YES_ERROR</string>
+				<key>GCC_WARN_UNDECLARED_SELECTOR</key>
+				<string>YES</string>
+				<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
+				<string>YES_AGGRESSIVE</string>
+				<key>GCC_WARN_UNUSED_FUNCTION</key>
+				<string>YES</string>
+				<key>GCC_WARN_UNUSED_VARIABLE</key>
+				<string>YES</string>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>8.0</string>
+				<key>METAL_ENABLE_DEBUG_INFO</key>
+				<string>YES</string>
+				<key>ONLY_ACTIVE_ARCH</key>
+				<string>YES</string>
+				<key>SDKROOT</key>
+				<string>iphoneos</string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Debug</string>
+		</dict>
+		<key>000BEB9019649F48008E2865</key>
+		<dict>
+			<key>buildSettings</key>
+			<dict>
+				<key>ALWAYS_SEARCH_USER_PATHS</key>
+				<string>NO</string>
+				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
+				<string>gnu++0x</string>
+				<key>CLANG_CXX_LIBRARY</key>
+				<string>libc++</string>
+				<key>CLANG_ENABLE_MODULES</key>
+				<string>YES</string>
+				<key>CLANG_ENABLE_OBJC_ARC</key>
+				<string>YES</string>
+				<key>CLANG_WARN_BOOL_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_CONSTANT_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
+				<string>YES_ERROR</string>
+				<key>CLANG_WARN_EMPTY_BODY</key>
+				<string>YES</string>
+				<key>CLANG_WARN_ENUM_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_INT_CONVERSION</key>
+				<string>YES</string>
+				<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
+				<string>YES_ERROR</string>
+				<key>CLANG_WARN_UNREACHABLE_CODE</key>
+				<string>YES</string>
+				<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
+				<string>YES</string>
+				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
+				<string>iPhone Developer</string>
+				<key>COPY_PHASE_STRIP</key>
+				<string>YES</string>
+				<key>ENABLE_NS_ASSERTIONS</key>
+				<string>NO</string>
+				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
+				<string>YES</string>
+				<key>GCC_C_LANGUAGE_STANDARD</key>
+				<string>gnu99</string>
+				<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
+				<string>YES</string>
+				<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
+				<string>YES_ERROR</string>
+				<key>GCC_WARN_UNDECLARED_SELECTOR</key>
+				<string>YES</string>
+				<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
+				<string>YES_AGGRESSIVE</string>
+				<key>GCC_WARN_UNUSED_FUNCTION</key>
+				<string>YES</string>
+				<key>GCC_WARN_UNUSED_VARIABLE</key>
+				<string>YES</string>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>8.0</string>
+				<key>METAL_ENABLE_DEBUG_INFO</key>
+				<string>NO</string>
+				<key>SDKROOT</key>
+				<string>iphoneos</string>
+				<key>VALIDATE_PRODUCT</key>
+				<string>YES</string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Release</string>
+		</dict>
+		<key>000BEB9119649F48008E2865</key>
+		<dict>
+			<key>buildConfigurations</key>
+			<array>
+				<string>000BEB9219649F48008E2865</string>
+				<string>000BEB9319649F48008E2865</string>
+			</array>
+			<key>defaultConfigurationIsVisible</key>
+			<string>0</string>
+			<key>defaultConfigurationName</key>
+			<string>Release</string>
+			<key>isa</key>
+			<string>XCConfigurationList</string>
+		</dict>
+		<key>000BEB9219649F48008E2865</key>
+		<dict>
+			<key>baseConfigurationReference</key>
+			<string>7B3C4B0808F5F3A96AC7EB9E</string>
+			<key>buildSettings</key>
+			<dict>
+				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+				<string>AppIcon</string>
+				<key>ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME</key>
+				<string>LaunchImage</string>
+				<key>CODE_SIGN_IDENTITY</key>
+				<string>iPhone Developer</string>
+				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
+				<string>iPhone Developer</string>
+				<key>INFOPLIST_FILE</key>
+				<string>Chain Wallet/Info.plist</string>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>8.0</string>
+				<key>LD_RUNPATH_SEARCH_PATHS</key>
+				<string>$(inherited) @executable_path/Frameworks</string>
+				<key>PRODUCT_NAME</key>
+				<string>Chain Wallet</string>
+				<key>PROVISIONING_PROFILE</key>
+				<string></string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Debug</string>
+		</dict>
+		<key>000BEB9319649F48008E2865</key>
+		<dict>
+			<key>baseConfigurationReference</key>
+			<string>2B11A3DF402557584FF218A1</string>
+			<key>buildSettings</key>
+			<dict>
+				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+				<string>AppIcon</string>
+				<key>ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME</key>
+				<string>LaunchImage</string>
+				<key>CODE_SIGN_IDENTITY</key>
+				<string>iPhone Developer</string>
+				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
+				<string>iPhone Developer</string>
+				<key>INFOPLIST_FILE</key>
+				<string>Chain Wallet/Info.plist</string>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>8.0</string>
+				<key>LD_RUNPATH_SEARCH_PATHS</key>
+				<string>$(inherited) @executable_path/Frameworks</string>
+				<key>PRODUCT_NAME</key>
+				<string>Chain Wallet</string>
+				<key>PROVISIONING_PROFILE</key>
+				<string></string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Release</string>
+		</dict>
+		<key>000BEB9419649F48008E2865</key>
+		<dict>
+			<key>buildConfigurations</key>
+			<array>
+				<string>000BEB9519649F48008E2865</string>
+				<string>000BEB9619649F48008E2865</string>
+			</array>
+			<key>defaultConfigurationIsVisible</key>
+			<string>0</string>
+			<key>defaultConfigurationName</key>
+			<string>Release</string>
+			<key>isa</key>
+			<string>XCConfigurationList</string>
+		</dict>
+		<key>000BEB9519649F48008E2865</key>
+		<dict>
+			<key>buildSettings</key>
+			<dict>
+				<key>BUNDLE_LOADER</key>
+				<string>$(BUILT_PRODUCTS_DIR)/Chain Wallet Demo.app/Chain Wallet Demo</string>
+				<key>FRAMEWORK_SEARCH_PATHS</key>
+				<array>
+					<string>$(SDKROOT)/Developer/Library/Frameworks</string>
+					<string>$(inherited)</string>
+				</array>
+				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
+				<array>
+					<string>DEBUG=1</string>
+					<string>$(inherited)</string>
+				</array>
+				<key>INFOPLIST_FILE</key>
+				<string>Chain Wallet DemoTests/Info.plist</string>
+				<key>LD_RUNPATH_SEARCH_PATHS</key>
+				<string>$(inherited) @executable_path/Frameworks @loader_path/Frameworks</string>
+				<key>METAL_ENABLE_DEBUG_INFO</key>
+				<string>YES</string>
+				<key>PRODUCT_NAME</key>
+				<string>Chain WalletTests</string>
+				<key>TEST_HOST</key>
+				<string>$(BUNDLE_LOADER)</string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Debug</string>
+		</dict>
+		<key>000BEB9619649F48008E2865</key>
+		<dict>
+			<key>buildSettings</key>
+			<dict>
+				<key>BUNDLE_LOADER</key>
+				<string>$(BUILT_PRODUCTS_DIR)/Chain Wallet Demo.app/Chain Wallet Demo</string>
+				<key>FRAMEWORK_SEARCH_PATHS</key>
+				<array>
+					<string>$(SDKROOT)/Developer/Library/Frameworks</string>
+					<string>$(inherited)</string>
+				</array>
+				<key>INFOPLIST_FILE</key>
+				<string>Chain Wallet DemoTests/Info.plist</string>
+				<key>LD_RUNPATH_SEARCH_PATHS</key>
+				<string>$(inherited) @executable_path/Frameworks @loader_path/Frameworks</string>
+				<key>METAL_ENABLE_DEBUG_INFO</key>
+				<string>NO</string>
+				<key>PRODUCT_NAME</key>
+				<string>Chain WalletTests</string>
+				<key>TEST_HOST</key>
+				<string>$(BUNDLE_LOADER)</string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Release</string>
+		</dict>
+		<key>000BEB9719649FAD008E2865</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNSendViewController.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB9819649FAD008E2865</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNSendViewController.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000BEB9919649FAD008E2865</key>
+		<dict>
+			<key>fileRef</key>
+			<string>000BEB9819649FAD008E2865</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>004EA539196CC3E30061A6B0</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNReceiveViewController.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>004EA53A196CC3E30061A6B0</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.cpp.objcpp</string>
+			<key>path</key>
+			<string>CNReceiveViewController.mm</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>004EA53B196CC3E30061A6B0</key>
+		<dict>
+			<key>fileRef</key>
+			<string>004EA53A196CC3E30061A6B0</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>00B50AD4196F27510066A0A5</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.cpp.objcpp</string>
+			<key>path</key>
+			<string>CNExportPKeyViewController.mm</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>00B50AD5196F27510066A0A5</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNExportPKeyViewController.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>00B50AD6196F27510066A0A5</key>
+		<dict>
+			<key>fileRef</key>
+			<string>00B50AD4196F27510066A0A5</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>00C2DE301966248900278CB3</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>wrapper.framework</string>
+			<key>name</key>
+			<string>MessageUI.framework</string>
+			<key>path</key>
+			<string>System/Library/Frameworks/MessageUI.framework</string>
+			<key>sourceTree</key>
+			<string>SDKROOT</string>
+		</dict>
+		<key>00C2DE311966248900278CB3</key>
+		<dict>
+			<key>fileRef</key>
+			<string>00C2DE301966248900278CB3</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>06CC7834687D4DF38B353503</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array/>
+			<key>inputPaths</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXShellScriptBuildPhase</string>
+			<key>name</key>
+			<string>Check Pods Manifest.lock</string>
+			<key>outputPaths</key>
+			<array/>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+			<key>shellPath</key>
+			<string>/bin/sh</string>
+			<key>shellScript</key>
+			<string>diff "${PODS_ROOT}/../Podfile.lock" "${PODS_ROOT}/Manifest.lock" &gt; /dev/null
+if [[ $? != 0 ]] ; then
+    cat &lt;&lt; EOM
+error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.
+EOM
+    exit 1
+fi
+</string>
+			<key>showEnvVarsInLog</key>
+			<string>0</string>
+		</dict>
+		<key>20C6D3BB1A37AC1F000E04C6</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNSecretStore.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>20C6D3BC1A37AC1F000E04C6</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNSecretStore.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>20C6D3BD1A37AC1F000E04C6</key>
+		<dict>
+			<key>fileRef</key>
+			<string>20C6D3BC1A37AC1F000E04C6</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>20C6D3C11A38C259000E04C6</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>file.xib</string>
+			<key>path</key>
+			<string>CNLaunchScreen.xib</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>20C6D3C21A38C259000E04C6</key>
+		<dict>
+			<key>fileRef</key>
+			<string>20C6D3C11A38C259000E04C6</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>2B11A3DF402557584FF218A1</key>
+		<dict>
+			<key>includeInIndex</key>
+			<string>1</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>text.xcconfig</string>
+			<key>name</key>
+			<string>Pods.release.xcconfig</string>
+			<key>path</key>
+			<string>Pods/Target Support Files/Pods/Pods.release.xcconfig</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>567B7A5D11694E0A8EDEDB42</key>
+		<dict>
+			<key>fileRef</key>
+			<string>DBF0F8BEE9CE42109B86A0DA</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>7B3C4B0808F5F3A96AC7EB9E</key>
+		<dict>
+			<key>includeInIndex</key>
+			<string>1</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>text.xcconfig</string>
+			<key>name</key>
+			<string>Pods.debug.xcconfig</string>
+			<key>path</key>
+			<string>Pods/Target Support Files/Pods/Pods.debug.xcconfig</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>825E4D12384C1F8C1303A83E</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>7B3C4B0808F5F3A96AC7EB9E</string>
+				<string>2B11A3DF402557584FF218A1</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Pods</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>944EA322EFE44F0CB010FD06</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>00C2DE301966248900278CB3</string>
+				<string>C94D88F9196609AA009240BF</string>
+				<string>DBF0F8BEE9CE42109B86A0DA</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Frameworks</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C94D88F9196609AA009240BF</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>wrapper.framework</string>
+			<key>name</key>
+			<string>LocalAuthentication.framework</string>
+			<key>path</key>
+			<string>System/Library/Frameworks/LocalAuthentication.framework</string>
+			<key>sourceTree</key>
+			<string>SDKROOT</string>
+		</dict>
+		<key>C94D88FB19661B73009240BF</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNBitcoinSendManager.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C94D88FC19661B73009240BF</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNBitcoinSendManager.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C94D88FD19661B73009240BF</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C94D88FC19661B73009240BF</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>C97A877819705FE0006EE6EA</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>CNWelcomeViewController.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C97A877919705FE0006EE6EA</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>CNWelcomeViewController.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C97A877A19705FE0006EE6EA</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C97A877919705FE0006EE6EA</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>C9A02FA11974981A00680A53</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>C9DABA6219773205003965C6</string>
+				<string>C9DABA6319773205003965C6</string>
+				<string>C9A02FA21974984900680A53</string>
+				<string>C9A02FA31974984900680A53</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Additions</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9A02FA21974984900680A53</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>UIColor+Additions.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9A02FA31974984900680A53</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>UIColor+Additions.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9A02FA41974984900680A53</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C9A02FA31974984900680A53</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>C9DABA6219773205003965C6</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>NSString+Additions.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9DABA6319773205003965C6</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.objc</string>
+			<key>path</key>
+			<string>NSString+Additions.m</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>C9DABA6419773205003965C6</key>
+		<dict>
+			<key>fileRef</key>
+			<string>C9DABA6319773205003965C6</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>DBF0F8BEE9CE42109B86A0DA</key>
+		<dict>
+			<key>explicitFileType</key>
+			<string>archive.ar</string>
+			<key>includeInIndex</key>
+			<string>0</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>path</key>
+			<string>libPods.a</string>
+			<key>sourceTree</key>
+			<string>BUILT_PRODUCTS_DIR</string>
+		</dict>
+		<key>F1A86FE9AE5D40868EAFE46F</key>
+		<dict>
+			<key>buildActionMask</key>
+			<string>2147483647</string>
+			<key>files</key>
+			<array/>
+			<key>inputPaths</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXShellScriptBuildPhase</string>
+			<key>name</key>
+			<string>Copy Pods Resources</string>
+			<key>outputPaths</key>
+			<array/>
+			<key>runOnlyForDeploymentPostprocessing</key>
+			<string>0</string>
+			<key>shellPath</key>
+			<string>/bin/sh</string>
+			<key>shellScript</key>
+			<string>"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh"
+</string>
+			<key>showEnvVarsInLog</key>
+			<string>0</string>
+		</dict>
+	</dict>
+	<key>rootObject</key>
+	<string>000BEB6919649F48008E2865</string>
+</dict>
+</plist>

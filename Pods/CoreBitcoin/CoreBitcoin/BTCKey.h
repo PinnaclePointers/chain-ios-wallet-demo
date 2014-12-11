@@ -1,10 +1,13 @@
 // CoreBitcoin by Oleg Andreev <oleganza@gmail.com>, WTFPL.
 
 #import <Foundation/Foundation.h>
+#import "BTCSignatureHashType.h"
 
 @class BTCCurvePoint;
 @class BTCPublicKeyAddress;
+@class BTCPublicKeyAddressTestnet;
 @class BTCPrivateKeyAddress;
+@class BTCPrivateKeyAddressTestnet;
 
 // BTCKey encapsulates EC public and private keypair (or only public part) on curve secp256k1.
 // You can sign data and verify signatures.
@@ -22,9 +25,14 @@
 // Initializes public key using a point on elliptic curve secp256k1.
 - (id) initWithCurvePoint:(BTCCurvePoint*)curvePoint;
 
-// Instantiates a key with either a DER private key (279 bytes) or a secret parameter (32 bytes).
-// Usually only secret parameter is used and private key is derived from it on the fly because other parameters are known (curve secp256k1).
+// Instantiates a key with secret parameter (32 bytes).
 - (id) initWithPrivateKey:(NSData*)privateKey;
+
+// Instantiates with a WIF-encoded private key (52 bytes like 5znkrJzL5GTFCaXWufUCUaPzDmLj2Pe2pWtAcSzg4hRUVxS2XqHa).
+// See also -initWithPrivateKeyAddress.
+- (id) initWithWIF:(NSString*)wifString;
+
+// Instantiates with a DER-encoded private key (279 bytes).
 - (id) initWithDERPrivateKey:(NSData*)DERPrivateKey;
 
 // These properties return mutable copy of data so you can clear it if needed.
@@ -35,8 +43,16 @@
 // These are returning explicitly compressed or uncompressed copies of the public key.
 @property(nonatomic, readonly) NSMutableData* compressedPublicKey;
 @property(nonatomic, readonly) NSMutableData* uncompressedPublicKey;
-@property(nonatomic, readonly) NSMutableData* privateKey; // 32-byte secret parameter. That's all you need to get full key pair on secp256k1
-@property(nonatomic, readonly) NSMutableData* DERPrivateKey; // 279-byte private key including secret and all curve parameters.
+
+// 32-byte secret parameter. That's all you need to get full key pair on secp256k1
+@property(nonatomic, readonly) NSMutableData* privateKey;
+
+// DER-encoded private key (279-byte) that includes secret and all curve parameters.
+@property(nonatomic, readonly) NSMutableData* DERPrivateKey;
+
+// Base58-encoded private key (or nil if privkey is not available).
+@property(nonatomic, readonly) NSString* WIF;
+@property(nonatomic, readonly) NSString* WIFTestnet;
 
 // When you set public key, this property reflects whether it is compressed or not.
 // To set this property you must have private counterpart. Then, -publicKey will be compressed/uncompressed accordingly.
@@ -49,8 +65,12 @@
 - (BOOL) isValidSignature:(NSData*)signature hash:(NSData*)hash;
 
 // Returns a signature data for a 256-bit hash using private key.
-// Returns nil if signing failed or private key is not present.
+// Returns nil if signing failed or a private key is not present.
 - (NSData*)signatureForHash:(NSData*)hash;
+
+// Same as above, but also appends a hash type byte to the signature.
+- (NSData*)signatureForHash:(NSData*)hash hashType:(BTCSignatureHashType)hashType;
+- (NSData*)signatureForHash:(NSData*)hash withHashType:(BTCSignatureHashType)hashType DEPRECATED_ATTRIBUTE;
 
 // Clears all key data from memory making receiver invalid.
 - (void) clear;
@@ -64,12 +84,22 @@
 // Instantiate with a private key in a form of address. Also takes care about compressing pubkey if needed.
 - (id) initWithPrivateKeyAddress:(BTCPrivateKeyAddress*)privateKeyAddress;
 
-// Public key hash. Refers to a compressed public key if was initialized with private key serialization marked with "private" flag.
-// See -publicKeyCompressed property.
-@property(nonatomic, readonly) BTCPublicKeyAddress* publicKeyAddress;
+// Public key hash.
+// IMPORTANT: resulting address depends on whether `publicKeyCompressed` is YES or NO.
+@property(nonatomic, readonly) BTCPublicKeyAddress* publicKeyAddress DEPRECATED_ATTRIBUTE;
 
-// Private key encoded as an address.
+// Public key hash.
+// IMPORTANT: resulting address depends on whether `publicKeyCompressed` is YES or NO.
+@property(nonatomic, readonly) BTCPublicKeyAddress* address;
+@property(nonatomic, readonly) BTCPublicKeyAddressTestnet* addressTestnet;
+
+// Returns address for a public key (Hash160(pubkey)).
+@property(nonatomic, readonly) BTCPublicKeyAddress* uncompressedPublicKeyAddress;
+@property(nonatomic, readonly) BTCPublicKeyAddress* compressedPublicKeyAddress;
+
+// Private key encoded in sipa format (base58 with compression flag).
 @property(nonatomic, readonly) BTCPrivateKeyAddress* privateKeyAddress;
+@property(nonatomic, readonly) BTCPrivateKeyAddressTestnet* privateKeyAddressTestnet;
 
 
 
@@ -109,6 +139,22 @@
 - (BOOL) isValidSignature:(NSData*)signature forMessage:(NSString*)message;
 - (BOOL) isValidSignature:(NSData*)signature forBinaryMessage:(NSData*)data;
 
+
+// Canonical checks
+
+// Used by BitcoinQT within OP_CHECKSIG to not relay transactions with non-canonical signature or a public key.
+// Normally, signatures and pubkeys are encoded in a canonical form and majority of the transactions are good.
+// Unfortunately, sometimes OpenSSL segfaults on some garbage data in place of a signature or a pubkey.
+// Read more on that here: https://bitcointalk.org/index.php?topic=8392.80
+
+// Note: non-canonical pubkey could still be valid for EC internals of OpenSSL and thus accepted by Bitcoin nodes.
++ (BOOL) isCanonicalPublicKey:(NSData*)data error:(NSError**)errorOut;
+
+// Checks if the script signature is canonical.
+// The signature is assumed to include hash type byte (see BTCSignatureHashType).
++ (BOOL) isCanonicalSignatureWithHashType:(NSData*)data verifyLowerS:(BOOL)verifyLowerS error:(NSError**)errorOut;
+
++ (BOOL) isCanonicalSignatureWithHashType:(NSData*)data verifyEvenS:(BOOL)verifyEvenS error:(NSError**)errorOut DEPRECATED_ATTRIBUTE;
 
 
 @end

@@ -10,6 +10,6 @@
 
 @interface CNBitcoinSendManager : NSObject
 
-+ (void)sendAmount:(BTCSatoshi)satoshiAmount receiveAddresss:(NSString *)receiveAddress fee:(BTCSatoshi)fee completionHandler:(void (^)(NSDictionary *dictionary, NSError *error))completionHandler;
++ (void)sendAmount:(BTCAmount)satoshiAmount receiveAddresss:(NSString *)receiveAddress fee:(BTCAmount)fee completionHandler:(void (^)(NSDictionary *dictionary, NSError *error))completionHandler;
 
 @end

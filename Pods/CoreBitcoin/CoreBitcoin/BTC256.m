@@ -320,7 +320,7 @@ BTC512 BTC512FromNSData(NSData* data)
 NSString* NSStringFromBTC160(BTC160 chunk)
 {
     const int length = 20;
-    char dest[2*length];
+    char dest[2*length + 1];
     const unsigned char *src = (unsigned char *)&chunk;
     for (int i = 0; i < length; ++i)
     {
@@ -332,7 +332,7 @@ NSString* NSStringFromBTC160(BTC160 chunk)
 NSString* NSStringFromBTC256(BTC256 chunk)
 {
     const int length = 32;
-    char dest[2*length];
+    char dest[2*length + 1];
     const unsigned char *src = (unsigned char *)&chunk;
     for (int i = 0; i < length; ++i)
     {
@@ -344,7 +344,7 @@ NSString* NSStringFromBTC256(BTC256 chunk)
 NSString* NSStringFromBTC512(BTC512 chunk)
 {
     const int length = 64;
-    char dest[2*length];
+    char dest[2*length + 1];
     const unsigned char *src = (unsigned char *)&chunk;
     for (int i = 0; i < length; ++i)
     {
@@ -357,17 +357,17 @@ NSString* NSStringFromBTC512(BTC512 chunk)
 // If string is invalid or data is too short, returns BTCHash{160,256,512}Null.
 BTC160 BTC160FromNSString(NSString* string)
 {
-    return BTC160FromNSData(BTCDataWithHexString(string));
+    return BTC160FromNSData(BTCDataFromHex(string));
 }
 
 BTC256 BTC256FromNSString(NSString* string)
 {
-    return BTC256FromNSData(BTCDataWithHexString(string));
+    return BTC256FromNSData(BTCDataFromHex(string));
 }
 
 BTC512 BTC512FromNSString(NSString* string)
 {
-    return BTC512FromNSData(BTCDataWithHexString(string));
+    return BTC512FromNSData(BTCDataFromHex(string));
 }
 
 

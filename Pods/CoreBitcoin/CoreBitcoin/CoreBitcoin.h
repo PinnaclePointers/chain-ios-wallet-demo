@@ -9,8 +9,10 @@
 #import <CoreBitcoin/BTCCurvePoint.h>
 #import <CoreBitcoin/BTCData.h>
 #import <CoreBitcoin/BTCErrors.h>
+#import <CoreBitcoin/BTCHashID.h>
 #import <CoreBitcoin/BTCKey.h>
 #import <CoreBitcoin/BTCKeychain.h>
+#import <CoreBitcoin/BTCMnemonic.h>
 #import <CoreBitcoin/BTCBlindSignature.h>
 #import <CoreBitcoin/BTCOpcode.h>
 #import <CoreBitcoin/BTCProtocolSerialization.h>
@@ -20,4 +22,10 @@
 #import <CoreBitcoin/BTCTransaction.h>
 #import <CoreBitcoin/BTCTransactionInput.h>
 #import <CoreBitcoin/BTCTransactionOutput.h>
+#import <CoreBitcoin/BTCOutpoint.h>
 #import <CoreBitcoin/BTCUnitsAndLimits.h>
+#import <CoreBitcoin/BTCNumberFormatter.h>
+#import <CoreBitcoin/BTCQRCode.h>
+#import <CoreBitcoin/BTCCurrencyConverter.h>
+#import <CoreBitcoin/BTCBitcoinURL.h>
+#import <CoreBitcoin/BTCTransactionBuilder.h>

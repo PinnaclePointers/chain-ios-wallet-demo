@@ -11,27 +11,53 @@
 // Keychain has two modes of operation:
 // - "normal derivation" which allows to derive public keys separately from the private ones (internally i below 0x80000000).
 // - "hardened derivation" which derives only private keys (for i >= 0x80000000).
-// Derivation can be treated as a single key or as an new branch of keychains.
+// Derivation can be treated as a single key or as a new branch of keychains.
 
 static const uint32_t BTCKeychainMaxIndex = 0x7fffffff;
 
 @class BTCKey;
 @class BTCBigNumber;
+@class BTCAddress;
 @interface BTCKeychain : NSObject<NSCopying>
 
-// The root key of the keychain. If this is a public-only keychain, key does not have a private key.
-@property(nonatomic, readonly) BTCKey* rootKey;
+// Initializes master keychain from a seed. This is the "root" keychain of the entire hierarchy.
+- (id) initWithSeed:(NSData*)seed;
+
+// Initializes with a base58-encoded extended public or private key.
+- (id) initWithExtendedKey:(NSString*)extendedKey;
+
+// Initializes keychain with a serialized extended key.
+// Use BTCDataFromBase58Check() to convert from Base58 string.
+- (id) initWithExtendedKeyData:(NSData*)extendedKeyData;
+
+// Clears all sensitive data from keychain (keychain becomes invalid)
+- (void) clear;
+
+// Deprecated because of the badly chosen name. See `-key`.
+@property(nonatomic, readonly) BTCKey* rootKey DEPRECATED_ATTRIBUTE;
+
+// Instance of BTCKey that is a "head" of this keychain.
+// If the keychain is public-only, key does not have a private component.
+@property(nonatomic, readonly) BTCKey* key;
 
 // Chain code associated with the key.
 @property(nonatomic, readonly) NSData* chainCode;
 
-// Serialized extended public key.
-// Use BTCBase58CheckStringWithData() to convert to Base58 form.
-@property(nonatomic, readonly) NSData* extendedPublicKey;
+// Base58-encoded extended public key.
+@property(nonatomic, readonly) NSString* extendedPublicKey;
 
-// Serialized extended private key or nil if the receiver is public-only keychain.
+// Base58-encoded extended private key.
+// Returns nil if this is a public-only keychain.
+@property(nonatomic, readonly) NSString* extendedPrivateKey;
+
+// Raw binary data for serialized extended public key.
 // Use BTCBase58CheckStringWithData() to convert to Base58 form.
-@property(nonatomic, readonly) NSData* extendedPrivateKey;
+@property(nonatomic, readonly) NSData* extendedPublicKeyData;
+
+// Raw binary data for serialized extended private key.
+// Returns nil if the receiver is public-only keychain.
+// Use BTCBase58CheckStringWithData() to convert to Base58 form.
+@property(nonatomic, readonly) NSData* extendedPrivateKeyData;
 
 // 160-bit identifier (aka "hash") of the keychain (RIPEMD160(SHA256(pubkey))).
 @property(nonatomic, readonly) NSData* identifier;
@@ -49,24 +75,17 @@ static const uint32_t BTCKeychainMaxIndex = 0x7fffffff;
 // Depth. Master keychain has depth = 0.
 @property(nonatomic, readonly) uint8_t depth;
 
-// Initializes master keychain from a seed. This is the "root" keychain of the entire hierarchy.
-- (id) initWithSeed:(NSData*)seed;
-
-// Initializes keychain with a serialized extended key.
-// Use BTCDataFromBase58Check() to convert from Base58 string.
-- (id) initWithExtendedKey:(NSData*)extendedKey;
-
 // Returns YES if the keychain can derive private keys.
-- (BOOL) isPrivate;
+@property(nonatomic, readonly) BOOL isPrivate;
 
 // Returns YES if the keychain was derived via hardened derivation from its parent.
 // This means internally parameter i = 0x80000000 | self.index
 // For the master keychain index is zero and isHardened=NO.
-- (BOOL) isHardened;
+@property(nonatomic, readonly) BOOL isHardened;
 
 // Returns a copy of the keychain stripped of the private key.
 // Equivalent to [[BTCKeychain alloc] initWithExtendedKey:keychain.extendedPublicKey]
-- (BTCKeychain*) publicKeychain;
+@property(nonatomic, readonly) BTCKeychain* publicKeychain;
 
 // Returns a derived keychain.
 // If hardened = YES, uses hardened derivation (possible only when private key is present; otherwise returns nil).
@@ -76,8 +95,8 @@ static const uint32_t BTCKeychainMaxIndex = 0x7fffffff;
 - (BTCKeychain*) derivedKeychainAtIndex:(uint32_t)index;
 - (BTCKeychain*) derivedKeychainAtIndex:(uint32_t)index hardened:(BOOL)hardened;
 
-// If factorOut is not NULL, it will be contain a number that is being added to the private key.
-// This is useful when BIP32 is used in blind signatures protocol.
+// If factorOut is not NULL, it will contain a number that is being added to the private key.
+// This feature is used in BTCBlindSignature protocol.
 - (BTCKeychain*) derivedKeychainAtIndex:(uint32_t)index hardened:(BOOL)hardened factor:(BTCBigNumber**)factorOut;
 
 // Returns a derived key from this keychain. This is a convenient way to access [... derivedKeychainAtIndex:i hardened:YES/NO].rootKey
@@ -87,8 +106,47 @@ static const uint32_t BTCKeychainMaxIndex = 0x7fffffff;
 - (BTCKey*) keyAtIndex:(uint32_t)index;
 - (BTCKey*) keyAtIndex:(uint32_t)index hardened:(BOOL)hardened;
 
-// Clears sensitive data from keychain
-- (void) clear;
+
+// BIP44 methods.
+// These methods are meant to be chained like so:
+// ```
+// invoiceAddress = [[rootKeychain.bitcoinMainnetKeychain keychainForAccount:1] externalKeyAtIndex:123].address
+// ```
+
+// Returns a subchain with path m/44'/0'
+@property(nonatomic, readonly) BTCKeychain* bitcoinMainnetKeychain;
+
+// Returns a subchain with path m/44'/1'
+@property(nonatomic, readonly) BTCKeychain* bitcoinTestnetKeychain;
+
+// Returns a hardened derivation for the given account index.
+// Equivalent to [keychain derivedKeychainAtIndex:accountIndex hardened:YES]
+- (BTCKeychain*) keychainForAccount:(uint32_t)accountIndex;
+
+// Returns a key from an external chain (/0/i).
+// BTCKey may be public-only if the receiver is public-only keychain.
+- (BTCKey*) externalKeyAtIndex:(uint32_t)index;
+
+// Returns a key from an internal (change) chain (/1/i).
+// BTCKey may be public-only if the receiver is public-only keychain.
+- (BTCKey*) changeKeyAtIndex:(uint32_t)index;
+
+
+
+// Scanning methods.
+
+// Scans child keys till one is found that matches the given address.
+// Only BTCPublicKeyAddress and BTCPrivateKeyAddress are supported. For others nil is returned.
+// Limit is maximum number of keys to scan. If no key is found, returns nil.
+// Returns nil if the receiver does not contain private key.
+- (BTCKeychain*) findKeychainForAddress:(BTCAddress*)address hardened:(BOOL)hardened limit:(NSUInteger)limit;
+- (BTCKeychain*) findKeychainForAddress:(BTCAddress*)address hardened:(BOOL)hardened from:(uint32_t)startIndex limit:(NSUInteger)limit;
+
+// Scans child keys till one is found that matches the given public key.
+// Limit is maximum number of keys to scan. If no key is found, returns nil.
+// Returns nil if the receiver does not contain private key.
+- (BTCKeychain*) findKeychainForPublicKey:(BTCKey*)pubkey hardened:(BOOL)hardened limit:(NSUInteger)limit;
+- (BTCKeychain*) findKeychainForPublicKey:(BTCKey*)pubkey hardened:(BOOL)hardened from:(uint32_t)startIndex limit:(NSUInteger)limit;
 
 @end
 

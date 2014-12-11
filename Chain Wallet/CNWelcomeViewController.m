@@ -21,7 +21,7 @@
     } reason:NSLocalizedString(@"Authenticate creation of the secret key.", @"")];
 
     BTCKey *k = [CNSecretStore chainSecretStore].publicKey;
-    NSLog(@"Generated address: %@ (%@)", k.publicKeyAddress, BTCHexStringFromData(k.publicKey));
+    NSLog(@"Generated address: %@ (%@)", k.address, BTCHexFromData(k.publicKey));
 
     // If we cannot read
     if (!k) {

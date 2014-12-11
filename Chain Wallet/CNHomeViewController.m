@@ -4,7 +4,7 @@
 //
 //  Copyright (c) 2014 Chain Inc. All rights reserved.
 //
-#import "Chain.h"
+#import <Chain/Chain.h>
 #import <CoreBitcoin/CoreBitcoin+Categories.h>
 
 #import "CNHomeViewController.h"
@@ -14,49 +14,36 @@
 #import "UIColor+Additions.h"
 #import "NSString+Additions.h"
 
-#define SEND_METHOD_ACTION_SHEET_TAG 1
-#define OPTIONS_ACTION_SHEET_TAG 2
 
 @interface CNHomeViewController () <UIActionSheetDelegate, UITableViewDataSource, UITableViewDelegate>
-@property(nonatomic, weak) IBOutlet UITableView *tableView;
-@property(nonatomic, weak) IBOutlet UIView *noTransactionsFooterView;
-
+@property(nonatomic, readonly) BTCAddress* address;
 @property(nonatomic) NSArray *transactions;
-@property(nonatomic) BTCSatoshi balance;
-
-
-@property(weak, nonatomic) IBOutlet UIButton *sendButton;
-@property NSString *address;
-@property NSString *sendToAddress;
-@property(weak, nonatomic) IBOutlet UILabel *transactionAmount;
-@property(weak, nonatomic) IBOutlet UILabel *transactionAddress;
-@property(weak, nonatomic) IBOutlet UILabel *transactionDate;
+@property(nonatomic) BTCAmount balance;
+@property(nonatomic) ChainNotificationObserver* addressObserver;
+@property(nonatomic) UIView* scannerView;
+@property(nonatomic, weak) IBOutlet UITableView *tableView;
+@property(nonatomic, weak) IBOutlet UILabel *noTransactionsLabel;
 @end
 
 @implementation CNHomeViewController
 
 - (void)dealloc {
-
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 
-    [self updateBalanceAndTransactions];
+    [self updateLabels];
+    [self updateBalance];
+    [self updateTransactions];
+    [self updateObserver];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-}
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    
-    // Get the stored address before view loads.
-    self.address = [CNSecretStore chainSecretStore].publicKey.publicKeyAddress.base58String;
-    
-    self.transactions = [NSArray array];
-    [self.tableView reloadData];
+    [self.addressObserver disconnect];
+    self.addressObserver = nil;
 }
 
 
@@ -69,169 +56,200 @@
 
 
 
-
 #pragma mark - Actions
 
-- (IBAction)tapSendButton:(id)sender {
-    [self _showSendMethodOptionSheet];
+
+- (IBAction) send:(id)sender {
+
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Send to address", @"")
+                                                                   message:nil
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Scan QR code" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self showQRScanner];
+    }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Paste from clipboard" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self pasteFromClipboard];
+    }]];
+
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (IBAction)tapOptionsButton:(id)sender {
-    // Show options action sheet.
-    UIActionSheet *actionSheet = [[UIActionSheet alloc]initWithTitle:@"More Options" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Visit Chain.com", @"View Source Code", @"Export Private Key", nil];
-    [actionSheet showInView:self.view];
-    actionSheet.tag = OPTIONS_ACTION_SHEET_TAG;
+- (IBAction) receive:(id)sender {
+    // See storyboard segue.
 }
 
-#pragma mark - QR Code Scanner
+- (IBAction) options:(id)sender {
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Options", @"")
+                                                                   message:nil
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
 
-- (void)presentQRScanner {
-    // TODO - Validate scan as valid address with regex
-    
-    // create the scanning view controller and a navigation controller in which to present it:
-    CDZQRScanningViewController *scanningVC = [CDZQRScanningViewController new];
-    UINavigationController *scanningNavVC = [[UINavigationController alloc] initWithRootViewController:scanningVC];
-    
-    // configure the scanning view controller:
-    scanningVC.resultBlock = ^(NSString *result) {
-        
-        // On Sucessful QR scan, present the SendViewController.
-        [scanningNavVC.presentingViewController dismissViewControllerAnimated:YES completion:^{
-            NSLog(@"raw scan: %@", result);
-            
-            // We need to remove bitcoin:// or bitcoin: if present at beginning of scanned address.
-            NSString* parsedAddress;
-            parsedAddress = [result stringByReplacingOccurrencesOfString:@"bitcoin://" withString:@""];
-            parsedAddress = [parsedAddress stringByReplacingOccurrencesOfString:@"bitcoin:" withString:@""];
-            NSLog(@"parsed scan: %@", parsedAddress);
-            
-            //Pass the parsed address to the view.
-            self.sendToAddress = parsedAddress;
-            
-            [self presentSendView];
-        }];
-    };
-    scanningVC.cancelBlock = ^() {
-        [scanningNavVC dismissViewControllerAnimated:YES completion:nil];
-    };
-    scanningVC.errorBlock = ^(NSError *error) {
-        // todo: show a UIAlertView orNSLog the error
-        [scanningNavVC dismissViewControllerAnimated:YES completion:nil];
-    };
-    
-    // present the view controller modally
-    [self presentViewController:scanningNavVC animated:YES completion:nil];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Visit Chain.com" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://chain.com"]];
+    }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"View source code" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/chain-engineering/chain-ios-wallet-demo"]];
+    }]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Export private key" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[CNSecretStore chainSecretStore] unlock:^id(CNSecretStore *store, NSError **errorOut) {
+            BTCKey* key = store.key;
+            if (!key) *errorOut = store.error;
+            return key;
+        } reason:NSLocalizedString(@"Authenticate to export your private key.", @"")
+                                 completionBlock:^(id key, NSError *error) {
+                                     if (key) {
+                                         [self exportKey:key];
+                                     }
+                                 }];
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
-#pragma mark - GetBalance from API
 
-- (void)updateBalanceAndTransactions {
-    // Balance
-    [[Chain sharedInstance] getAddress:self.address completionHandler:^(NSDictionary *dictionary, NSError *error) {
-        if (!error) {
-            self.balance = [[dictionary objectForKey:@"unconfirmed_balance"] integerValue]+ [[dictionary objectForKey:@"balance"] integerValue];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSString *formattedBalanceString = [NSString stringWithFormat:@"฿ %@", [NSString stringWithSatoshiInBTCFormat:self.balance]];
-                [self setTitle:formattedBalanceString];
-            });
-            // Store the Address as User Default
-            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-            [defaults setValue:@(self.balance) forKey:@"balance"];
-            [defaults synchronize];
+- (void) showQRScanner {
+    __weak __typeof(self) weakself = self;
+    self.scannerView = [BTCQRCode scannerViewWithBlock:^(NSString *message) {
+        // Try to check if it's a raw address
+        BTCAddress* address = [BTCAddress addressWithString:message];
+        if (address) {
+            [weakself finishScanning];
+            [weakself sendToAddress:address amount:0];
+            return;
+        }
+        // Check if it's a bitcoin URL with address and potentially an amount.
+        BTCBitcoinURL* url = [[BTCBitcoinURL alloc] initWithURL:[NSURL URLWithString:message]];
+        if (url) {
+            [weakself finishScanning];
+            [weakself sendToAddress:url.address amount:url.amount];
+            return;
         }
     }];
-    
-    // Transactions
-    [[Chain sharedInstance] getAddressTransactions:self.address completionHandler:^(NSDictionary *dictionary, NSError *error) {
-        if (!error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.transactions = [dictionary valueForKey:@"results"];
-                
-                // Show the no transactions footer if needed.
-                self.tableView.tableFooterView = (self.transactions.count) ? nil : self.noTransactionsFooterView;
-                self.tableView.hidden = NO;
-                [self.tableView reloadData];
-            });
-        }
-    }];
+
+    // Simply display full-screen and tap anywhere to dismiss.
+
+    [self.view addSubview:self.scannerView];
+    self.scannerView.frame = self.view.bounds;
+    self.scannerView.userInteractionEnabled = YES;
+    UITapGestureRecognizer* cancelTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(finishScanning)];
+    [self.scannerView addGestureRecognizer:cancelTap];
 }
 
-#pragma mark - Send Option Action Sheet
-
-- (void)_showSendMethodOptionSheet {
-    // Show send action sheet.
-    UIActionSheet *actionSheet = [[UIActionSheet alloc]initWithTitle:@"Send to Address" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Scan QR Code", @"Paste from Clipboard", nil];
-    actionSheet.tag = SEND_METHOD_ACTION_SHEET_TAG;
-    [actionSheet showInView:self.view];
+- (void) finishScanning {
+    [self.scannerView removeFromSuperview];
+    self.scannerView = nil;
 }
 
+- (void) pasteFromClipboard {
+    // Get the contents of the device clipboard.
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    BTCAddress* address = [BTCAddress addressWithString:pasteboard.string];
 
-#pragma mark - Send Action Sheet
-
-- (void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex {
-    if(actionSheet.tag == SEND_METHOD_ACTION_SHEET_TAG) {
-        if (buttonIndex == 0) {
-            [self presentQRScanner];
-        }
-        if (buttonIndex == 1) {
-            // Get the contents of the device clipboard.
-            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-            self.sendToAddress = pasteboard.string;
-            
-            // Check Pasteboard content against a regular expression to see if it is a valid Bitcoin addres format. If it matches, load sendViewController and pass the string to it. If it does not match or clipboard is empty, show a UIAlertView notifying the user.
-            if (([self.sendToAddress rangeOfString:@"^[13][a-km-zA-HJ-NP-Z0-9]{26,33}$" options:NSRegularExpressionSearch].location != NSNotFound) && self.sendToAddress.length !=0) {
-                
-                [self presentSendView];
-            }
-            else {
-                NSLog(@"Not a valid Bitcoin address");
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Oops!"
-                                                                    message:@"Clipboard does not contain a valid Bitcoin address"
-                                                                   delegate:nil
-                                                          cancelButtonTitle:@"OK"
-                                                          otherButtonTitles:nil];
-                
-                [alertView show];
-            }
-        }
-    } if(actionSheet.tag == OPTIONS_ACTION_SHEET_TAG) {
-        if (buttonIndex == 0 ) {
-            NSString *strurl = @"https://chain.com";
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:strurl]];
-        }
-        if (buttonIndex == 1) {
-            NSString *strurl = @"https://github.com/chain-engineering/chain-ios-wallet-demo";
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:strurl]];
-        }
-        if (buttonIndex == 2) {
-
-            [[CNSecretStore chainSecretStore] unlock:^id(CNSecretStore *store, NSError **errorOut) {
-                BTCKey* key = store.key;
-                if (!key) *errorOut = store.error;
-                return key;
-            } reason:NSLocalizedString(@"Authenticate to export your private key.", @"")
-                                     completionBlock:^(id result, NSError *error) {
-                                         BTCKey* key = result;
-                                         if (key) {
-                                             UINavigationController *exportNavigationController = [self.storyboard instantiateViewControllerWithIdentifier:@"exportNavController"];
-                                             CNExportPKeyViewController* evc = exportNavigationController.viewControllers.firstObject;
-                                             evc.privateKey = key;
-                                            [self presentViewController:exportNavigationController animated:YES completion:nil];
-                                         }
-                                     }];
-        }
+    if (!address) {
+        [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Oops!", @"")
+                                    message:NSLocalizedString(@"Clipboard does not contain a valid Bitcoin address", @"")
+                                   delegate:nil
+                          cancelButtonTitle:NSLocalizedString(@"OK", @"")
+                          otherButtonTitles:nil] show];
+        return;
     }
+
+    [self sendToAddress:address amount:0];
 }
 
-- (void)presentSendView {
-    NSLog(@"Valid Bitcoin address: %@", self.sendToAddress);
+- (void) exportKey:(BTCKey*)key {
+    UINavigationController *exportNavigationController = [self.storyboard instantiateViewControllerWithIdentifier:@"exportNavController"];
+    CNExportPKeyViewController* evc = (CNExportPKeyViewController*)exportNavigationController.topViewController;
+    evc.privateKey = key;
+    [self presentViewController:exportNavigationController animated:YES completion:nil];
+}
+
+- (void) sendToAddress:(BTCAddress*)address amount:(BTCAmount)amount {
+
     UINavigationController *sendNavigationController = [self.storyboard instantiateViewControllerWithIdentifier:@"sendNavController"];
-    CNSendViewController *svc = (CNSendViewController *)[sendNavigationController topViewController];
-    [svc setSendToAddress:self.sendToAddress];
+    CNSendViewController *svc = (CNSendViewController *)sendNavigationController.topViewController;
+    svc.address = address;
+    svc.amount = amount;
     [self presentViewController:sendNavigationController animated:YES completion:nil];
 }
 
+
+
+#pragma mark - Updates
+
+
+- (void) updateTransactions {
+    self.noTransactionsLabel.text = NSLocalizedString(@"Loading...", @"");
+    [[Chain sharedInstance] getAddressTransactions:self.address limit:10 completionHandler:^(NSArray *transactions, NSError *error) {
+        if (transactions) {
+            self.transactions = transactions;
+            self.noTransactionsLabel.text = NSLocalizedString(@"No Transactions", @""); // will be visible if txs.count == 0
+            [self.tableView reloadData];
+        } else {
+            self.noTransactionsLabel.text = NSLocalizedString(@"Network Error", @"");
+        }
+    }];
+}
+
+- (void) updateBalance {
+    [[Chain sharedInstance] getAddress:self.address completionHandler:^(ChainAddressInfo *addressInfo, NSError *error) {
+        if (addressInfo) {
+            self.balance = addressInfo.totalBalance;
+        }
+    }];
+}
+
+- (void) updateObserver {
+    [self.addressObserver disconnect];
+    // Listen to new transactions on this address and update balance as needed.
+    __weak __typeof(self) weakself = self;
+    self.addressObserver = [[Chain sharedInstance] observerForNotification:
+                            [[ChainNotification alloc] initWithAddress:self.address]
+                                                             resultHandler:^(ChainNotificationResult *notification) {
+
+                                                                 if ([notification isKindOfClass:[ChainNotificationAddress class]]) {
+                                                                     // Instantly adjust the balance based on notification.
+                                                                     ChainNotificationAddress* addrNotif = (ChainNotificationAddress*)notification;
+                                                                     weakself.balance = weakself.balance + addrNotif.receivedAmount - addrNotif.sentAmount;
+
+                                                                     // For good measure update the balance with a canonical request.
+                                                                     // If we don't do that, and miss some notifications, our balance will become irrelevant.
+                                                                     // Same for transactions.
+                                                                     [weakself updateBalance];
+                                                                     [weakself updateTransactions];
+                                                                 }
+                                                             }];
+}
+
+- (void) setTransactions:(NSArray *)transactions {
+    _transactions = transactions;
+    [self updateLabels];
+}
+
+- (void) setBalance:(BTCAmount)balance {
+    _balance = balance;
+    self.title = [self formattedAmount:_balance];
+}
+
+- (NSString*) formattedAmount:(BTCAmount) amount {
+    BTCNumberFormatter* fmt = [[BTCNumberFormatter alloc] initWithBitcoinUnit:BTCNumberFormatterUnitBTC symbolStyle:BTCNumberFormatterSymbolStyleSymbol];
+    return [fmt stringFromAmount:amount];
+}
+
+- (void) updateLabels {
+    self.noTransactionsLabel.hidden = (_transactions.count > 0);
+    self.tableView.hidden = !self.noTransactionsLabel.hidden;
+}
+
+
+
+
 #pragma mark - UITableViewDataSource
+
+
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     return self.transactions.count;
@@ -243,155 +261,144 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *cellIdentifier = @"transactionCell";
+    static NSString *cellIdentifier = @"cell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     
-    NSDictionary *transaction = [self.transactions objectAtIndex:indexPath.row];
+    BTCTransaction *tx = self.transactions[indexPath.row];
     
     // Pointers for Cell Values
-    UILabel *transactionAmount = (UILabel *)[cell.contentView viewWithTag:1];
-    UILabel *transactionAddress = (UILabel *)[cell.contentView viewWithTag:2];
-    UILabel *transactionDate = (UILabel *)[cell.contentView viewWithTag:3];
-    
-    //Transaction Date Formatter
+    UILabel *amountLabel = (UILabel *)[cell.contentView viewWithTag:1];
+    UILabel *addressLabel = (UILabel *)[cell.contentView viewWithTag:2];
+    UILabel *dateLabel = (UILabel *)[cell.contentView viewWithTag:3];
+
+    // Transaction Date Formatter
     NSString *localDateString = @"";
-    NSString *blockTimeString = [transaction valueForKey:@"block_time"];
-    if (blockTimeString && [blockTimeString isKindOfClass:[NSString class]]) {
+    if (tx.blockDate) {
         NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
         fmt.timeZone = [NSTimeZone systemTimeZone];
-        fmt.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZZZZ";
-        NSString *utcString = blockTimeString;
-        NSDate *utcDate = [fmt dateFromString:utcString];
         fmt.timeStyle = NSDateFormatterNoStyle;
         fmt.dateStyle = NSDateFormatterShortStyle;
-        localDateString = [fmt stringFromDate:utcDate];
+        localDateString = [fmt stringFromDate:tx.blockDate];
     }
     
     // Show Date (if confirmed) or 'Pending' (if not confirmed)
-    NSInteger transactionConfirmations = [[transaction valueForKey:@"confirmations"] integerValue];
-    if (transactionConfirmations == 0)
-        transactionDate.text = @"Pending";
-    else
-        transactionDate.text = localDateString;
+    NSInteger transactionConfirmations = [[tx valueForKey:@"confirmations"] integerValue];
+    if (transactionConfirmations == 0) {
+        dateLabel.text = @"Pending";
+    } else {
+        dateLabel.text = localDateString;
+    }
     
     // Transaction Amount
-    BTCSatoshi transactionValue = [self _valueForTransactionForCurrentUser:transaction];
-    NSString *transactionAmountString = [NSString stringWithFormat:@"฿ %@", [NSString stringWithSatoshiInBTCFormat:transactionValue]];
-    transactionAmount.text = transactionAmountString;
+    BTCAmount txValue = [self valueForTransactionForCurrentUser:tx];
+    amountLabel.text = [self formattedAmount:txValue];
     
     // Change Color of Transaction Amount if is sent or received or to self
-    BOOL isTransactionToSelf = [self _isTransactionToSelf:transaction];
+    BOOL isTransactionToSelf = [self isTransactionToSelf:tx];
     if (isTransactionToSelf) {
-        transactionAmount.textColor = [UIColor colorWithHex:0x7d2b8b];
-        transactionAddress.text = @"To: Yourself (Launder that money, yo!)";
+        amountLabel.textColor = [UIColor colorWithHex:0x7d2b8b];
+        addressLabel.text = @"To: myself";
     } else {
-        if (transactionValue < 0) {
+        if (txValue < 0) {
             // Sent
-            transactionAmount.textColor = [UIColor colorWithHex:0xf76b6b];
-            transactionAddress.text = [NSString stringWithFormat:@"To: %@", [self _outputAddressesString:transaction]];
+            amountLabel.textColor = [UIColor colorWithHex:0xf76b6b];
+            addressLabel.text = [NSString stringWithFormat:@"To: %@", [self outputAddressesString:tx]];
         } else {
             // Receive
-            transactionAmount.textColor = [UIColor colorWithHex:0x7fdf40];
-            transactionAddress.text = [NSString stringWithFormat:@"From: %@", [self _inputAddressesString:transaction]];
+            amountLabel.textColor = [UIColor colorWithHex:0x7fdf40];
+            addressLabel.text = [NSString stringWithFormat:@"From: %@", [self inputAddressesString:tx]];
         }
     }
     
     return cell;
 }
 
-#pragma mark - 
 
-- (BOOL)_isTransactionToSelf:(NSDictionary *)transactionDictionary {
+
+#pragma mark - Helpers
+
+
+
+- (BOOL) isTransactionToSelf:(BTCTransaction *)tx {
     // If all inputs and outputs are wallet's address.
     NSMutableArray *addresses = [NSMutableArray array];
-    
-    NSArray *inputs = [transactionDictionary valueForKey:@"inputs"];
-    for (NSDictionary *input in inputs) {
-        [addresses addObjectsFromArray:[input valueForKey:@"addresses"]];
+
+    for (BTCTransactionInput *txin in tx.inputs) {
+        [addresses addObjectsFromArray:txin.userInfo[@"addresses"]];
     }
-    NSArray *outputs = [transactionDictionary valueForKey:@"outputs"];
-    for (NSDictionary *output in outputs) {
-        [addresses addObjectsFromArray:[output valueForKey:@"addresses"]];
+    for (BTCTransactionOutput *txout in tx.outputs) {
+        [addresses addObjectsFromArray:txout.userInfo[@"addresses"]];
     }
     
     // Removes wallet address and duplicate addresses. A count of zero means wallet address was included.
-    NSArray *filteredAddresses = [self _filteredAddresses:addresses];
-    if ([filteredAddresses count] == 0) {
-        return true;
-    } else{
-        return false;
-    }
+    NSArray *filteredAddresses = [self filteredAddresses:addresses];
+    return (filteredAddresses.count == 0);
 }
 
-- (BTCSatoshi)_valueForInputOrOutput:(NSDictionary *)dictionary {
-    BTCSatoshi amount = 0;
-    NSArray *addresses = [dictionary valueForKey:@"addresses"];
-    BOOL isForUserAddress = NO;
-    for (NSString *address in addresses) {
-        if ([address isEqualToString:self.address]) {
-            isForUserAddress = YES;
+- (BTCAmount) valueForInputOrOutput:(id)txinOrTxout {
+    NSArray *addresses = [txinOrTxout userInfo][@"addresses"];
+    for (BTCAddress *address in addresses) {
+        if ([address isEqual:self.address]) {
+            return [[txinOrTxout valueForKey:@"value"] longLongValue];
         }
     }
-    if (isForUserAddress) {
-        NSNumber *value = [dictionary valueForKey:@"value"];
-        amount = amount + [value integerValue];
-    }
-    return amount;
+    return 0;
 }
 
-- (BTCSatoshi)_valueForTransactionForCurrentUser:(NSDictionary *)transactionDictionary {
-    BTCSatoshi valueForWallet = 0;
-    if ([self _isTransactionToSelf:transactionDictionary]) {
+- (BTCAmount)valueForTransactionForCurrentUser:(BTCTransaction *)tx {
+    BTCAmount valueForWallet = 0;
+    if ([self isTransactionToSelf:tx]) {
         // If sending to self, we assume the first output is the amount to display and other is change.
-        NSArray *outputs = [transactionDictionary valueForKey:@"outputs"];
+        NSArray *outputs = [tx valueForKey:@"outputs"];
         if ([outputs count] >= 1) {
             valueForWallet = [[[outputs firstObject] valueForKey:@"value"] integerValue];
         }
     } else {
         // Iterate inputs calculating total sent in transaction.
-        NSArray *inputs = [transactionDictionary valueForKey:@"inputs"];
-        BTCSatoshi amountSent = 0;
-        for (NSDictionary *input in inputs) {
-            amountSent = amountSent + [self _valueForInputOrOutput:input];
+        BTCAmount amountSent = 0;
+        for (BTCTransactionInput *txin in tx.inputs) {
+            amountSent = amountSent + [self valueForInputOrOutput:txin];
         }
         
         // Iterate outputs calculating total received in transaction.
-        NSArray *outputs = [transactionDictionary valueForKey:@"outputs"];
-        BTCSatoshi amountReceived = 0;
-        for (NSDictionary *output in outputs) {
-            amountReceived = amountReceived + [self _valueForInputOrOutput:output];
+        BTCAmount amountReceived = 0;
+        for (BTCTransactionOutput *txout in tx.outputs) {
+            amountReceived = amountReceived + [self valueForInputOrOutput:txout];
         }
         
         valueForWallet = amountReceived - amountSent;
         // If it is sent, do not include fee.
         if (valueForWallet < 0) {
-            BTCSatoshi fee = [[transactionDictionary valueForKey:@"fees"] integerValue];
-            valueForWallet = valueForWallet + fee;
+            valueForWallet = valueForWallet + tx.fee;
         }
     }
     
     return valueForWallet;
 }
 
-- (NSArray *)_filteredAddresses:(NSArray *)addresses {
+- (NSArray *) filteredAddresses:(NSArray *)addresses {
     // Remove duplicates.
-    NSMutableArray *filteredAddresses = [NSMutableArray arrayWithArray:[[NSSet setWithArray:addresses] allObjects]];
+    NSMutableArray *filteredAddressStrings = [NSMutableArray arrayWithArray:[[NSSet setWithArray:[addresses valueForKey:@"string"]] allObjects]];
     
     // Remove current user.
-    NSUInteger indexForCurrentUser = [filteredAddresses indexOfObject:self.address];
-    if (indexForCurrentUser != NSNotFound) {
-        [filteredAddresses removeObjectAtIndex:indexForCurrentUser];
+    [filteredAddressStrings removeObject:self.address.string];
+
+    NSMutableArray* filteredAddresses = [NSMutableArray array];
+    for (id str in filteredAddressStrings)
+    {
+        BTCAddress* addr = [BTCAddress addressWithString:str];
+        if (!addr) return nil;
+        [filteredAddresses addObject:addr];
     }
-    
-    return filteredAddresses;
+    return addresses;
 }
 
-- (NSString *)_filteredTruncatedAddress:(NSArray *)addresses {
-    NSArray *filteredAddresses = [self _filteredAddresses:addresses];
+- (NSString *) filteredTruncatedAddress:(NSArray *)addresses {
+    NSArray *filteredAddresses = [self filteredAddresses:addresses];
     
     NSMutableString *addressString = [NSMutableString string];
     
@@ -416,26 +423,20 @@
     return addressString;
 }
 
-- (NSString *)_inputAddressesString:(NSDictionary *)transactionDictionary {
+- (NSString *) inputAddressesString:(BTCTransaction*)tx {
     NSMutableArray *addresses = [NSMutableArray array];
-    
-    NSArray *outputs = [transactionDictionary valueForKey:@"outputs"];
-    for (NSDictionary *output in outputs) {
-        [addresses addObjectsFromArray:[output valueForKey:@"addresses"]];
+    for (BTCTransactionInput *txin in tx.inputs) {
+        [addresses addObjectsFromArray:txin.userInfo[@"addresses"]];
     }
-
-    return [self _filteredTruncatedAddress:addresses];
+    return [self filteredTruncatedAddress:addresses];
 }
 
-- (NSString *)_outputAddressesString:(NSDictionary *)transactionDictionary {
+- (NSString *) outputAddressesString:(BTCTransaction*)tx {
     NSMutableArray *addresses = [NSMutableArray array];
-    
-    NSArray *outputs = [transactionDictionary valueForKey:@"outputs"];
-    for (NSDictionary *output in outputs) {
-        [addresses addObjectsFromArray:[output valueForKey:@"addresses"]];
+    for (BTCTransactionOutput *txout in tx.outputs) {
+        [addresses addObjectsFromArray:txout.userInfo[@"addresses"]];
     }
-
-    return [self _filteredTruncatedAddress:addresses];
+    return [self filteredTruncatedAddress:addresses];
 }
 
 @end

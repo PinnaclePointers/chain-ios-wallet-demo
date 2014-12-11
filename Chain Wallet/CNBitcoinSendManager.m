@@ -16,7 +16,7 @@
 
 @implementation CNBitcoinSendManager
 
-+ (void)sendAmount:(BTCSatoshi)satoshiAmount receiveAddresss:(NSString *)receiveAddress fee:(BTCSatoshi)fee completionHandler:(void (^)(NSDictionary *dictionary, NSError *error))completionHandler {
++ (void)sendAmount:(BTCAmount)satoshiAmount receiveAddresss:(NSString *)receiveAddress fee:(BTCAmount)fee completionHandler:(void (^)(NSDictionary *dictionary, NSError *error))completionHandler {
 
     __block BTCKey* key = nil;
     __block NSError* error = nil;
@@ -36,12 +36,18 @@
         return;
     }
 
-    NSLog(@"Sending from Address: %@", [key.publicKeyAddress base58String]);
+    NSLog(@"Sending from Address: %@", [key.address string]);
     
-    [CNBitcoinSendManager sendFromPrivateKey:key to:[BTCPublicKeyAddress addressWithBase58String:receiveAddress] change:key.publicKeyAddress amount:satoshiAmount fee:fee completionHandler:^(BTCTransaction *transaction, NSError *error) {
+    [CNBitcoinSendManager sendFromPrivateKey:key
+                                          to:[BTCPublicKeyAddress addressWithString:receiveAddress]
+                                      change:key.address
+                                      amount:satoshiAmount
+                                         fee:fee
+                           completionHandler:^(BTCTransaction *transaction, NSError *error) {
         if (transaction) {
-            NSString *transactionHexString = BTCHexStringFromData([transaction data]);
-            [[Chain sharedInstance] sendTransaction:transactionHexString completionHandler:completionHandler];
+            [[Chain sharedInstance] sendTransaction:transaction completionHandler:^(BTCTransaction *tx, NSError *error) {
+                completionHandler(tx.dictionary, error);
+            }];
         } else {
             if (!error) {
                 NSString *domain = @"com.Chain.Chain-Wallet.ErrorDomain";
@@ -55,36 +61,18 @@
     }];
 }
 
-+ (NSArray *)unspentOutputs:(NSDictionary *)responseDictionary {
-    NSArray *responseOutputArray = [responseDictionary valueForKey:@"results"];
-    NSMutableArray *outputs = [NSMutableArray array];
-    
-    for (NSDictionary* item in responseOutputArray) {
-        BTCTransactionOutput* txout = [[BTCTransactionOutput alloc] init];
-
-        txout.value = [item[@"value"] longLongValue];
-        txout.script = [[BTCScript alloc] initWithString:item[@"script"]];
-        txout.index = [item[@"output_index"] intValue];
-        txout.transactionHash = (BTCReversedData(BTCDataWithHexString(item[@"transaction_hash"])));
-        [outputs addObject:txout];
-    }
-    return outputs;
-}
-
 // Based on CoreBitcoin / CoreBitcoin / BTCTransaction+Tests.m
-+ (void)sendFromPrivateKey:(BTCKey *)privateKey to:(BTCPublicKeyAddress *)destinationAddress change:(BTCPublicKeyAddress *)changeAddress amount:(BTCSatoshi)amount fee:(BTCSatoshi)fee completionHandler:(void (^)(BTCTransaction *transaction, NSError *error))completionHandler {
++ (void)sendFromPrivateKey:(BTCKey *)privateKey to:(BTCPublicKeyAddress *)destinationAddress change:(BTCPublicKeyAddress *)changeAddress amount:(BTCAmount)amount fee:(BTCAmount)fee completionHandler:(void (^)(BTCTransaction *transaction, NSError *error))completionHandler {
     
     BTCKey *key = privateKey;
     
-    NSString *sendingAddressString = [key.publicKeyAddress base58String];
-    [[Chain sharedInstance] getAddressUnspents:sendingAddressString completionHandler:^(NSDictionary *dictionary, NSError *error) {
-        if (error) {
+    NSString *sendingAddressString = key.address.string;
+    [[Chain sharedInstance] getAddressUnspents:sendingAddressString completionHandler:^(NSArray* utxos, NSError *error) {
+        if (!utxos) {
             completionHandler(nil, error);
         } else {
-            NSArray *utxos = [CNBitcoinSendManager unspentOutputs:dictionary];
-            
             // Find enough outputs to spend the total amount.
-            BTCSatoshi totalAmount = amount + fee;
+            BTCAmount totalAmount = amount + fee;
             
             // Sort utxo in order of amount.
             utxos = [utxos sortedArrayUsingComparator:^(BTCTransactionOutput* obj1, BTCTransactionOutput* obj2) {
@@ -94,10 +82,10 @@
             
             NSMutableArray *txouts = [NSMutableArray array];
             
-            BTCSatoshi balance = 0;
+            BTCAmount balance = 0;
             
             for (BTCTransactionOutput *txout in utxos) {
-                if (txout.script.isHash160Script) {
+                if (txout.script.isPayToPublicKeyHashScript) {
                     [txouts addObject:txout];
                     balance = balance + txout.value;
                 }
@@ -117,7 +105,7 @@
                 // Create a new transaction
                 BTCTransaction *tx = [[BTCTransaction alloc] init];
 
-                BTCSatoshi spentCoins = 0;
+                BTCAmount spentCoins = 0;
                 
                 // Add all outputs as inputs
                 for (BTCTransactionOutput *txout in txouts) {
@@ -130,8 +118,8 @@
                 }
                 
                 // Add required outputs - payment and change
-                BTCTransactionOutput *paymentOutput = [BTCTransactionOutput outputWithValue:amount address:destinationAddress];
-                BTCTransactionOutput *changeOutput = [BTCTransactionOutput outputWithValue:(spentCoins - totalAmount) address:changeAddress];
+                BTCTransactionOutput *paymentOutput = [[BTCTransactionOutput alloc] initWithValue:amount address:destinationAddress];
+                BTCTransactionOutput *changeOutput = [[BTCTransactionOutput alloc] initWithValue:(spentCoins - totalAmount) address:changeAddress];
                 
                 [tx addOutput:paymentOutput];
                 [tx addOutput:changeOutput];

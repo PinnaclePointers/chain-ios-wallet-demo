@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 @class BTCKey;
+@class BTCAddress;
 @interface CNSecretStore : NSObject
 
 // Shared Chain-specific secret store.

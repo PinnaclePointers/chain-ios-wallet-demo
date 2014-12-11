@@ -4,17 +4,23 @@
 #import "BTCData.h"
 #import "BTCAddress.h"
 #import "BTCCurvePoint.h"
+#import "BTCBigNumber.h"
 #import "BTCProtocolSerialization.h"
+#import "BTCErrors.h"
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 
+#define CHECK_IF_CLEARED if (_cleared) { [[NSException exceptionWithName:@"BTCKey: instance was already cleared." reason:@"" userInfo:nil] raise]; }
+
 #define BTCCompressedPubkeyLength   (33)
 #define BTCUncompressedPubkeyLength (65)
 
-static BOOL    BTCCheckPrivateKeyRange(const unsigned char *secret);
+static BOOL    BTCKeyCheckPrivateKeyRange(const unsigned char *secret, size_t length);
+static BOOL    BTCKeyCheckSignatureElement(const unsigned char *bytes, int length, BOOL half);
 static int     BTCRegenerateKey(EC_KEY *eckey, BIGNUM *priv_key);
 static NSData* BTCSignatureHashForBinaryMessage(NSData* data);
 static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned char *msg, int msglen, int recid, int check);
@@ -23,6 +29,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 @end
 
 @implementation BTCKey {
+    BOOL _cleared;
     EC_KEY* _key;
     NSMutableData* _publicKey;
     BOOL _publicKeyCompressed;
@@ -64,6 +71,16 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
     return self;
 }
 
+- (id) initWithWIF:(NSString*)wifString
+{
+    BTCPrivateKeyAddress* addr = [BTCPrivateKeyAddress addressWithBase58String:wifString];
+    if (![addr isKindOfClass:[BTCPrivateKeyAddress class]])
+    {
+        return nil;
+    }
+    return [self initWithPrivateKeyAddress:addr];
+}
+
 - (id) initWithDERPrivateKey:(NSData*)DERPrivateKey
 {
     if (self = [super init])
@@ -82,9 +99,32 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
     return self;
 }
 
+- (void) dealloc
+{
+    [self clear];
+}
+
+- (void) clear
+{
+    BTCDataClear(_publicKey);
+    _publicKey = nil;
+
+    // I couldn't find how to clear sensitive key data in OpenSSL,
+    // so I just replace existing key with a new one.
+    // Correct me if I'm doing it wrong.
+    if (!_cleared) [self generateKeyPair];
+
+    if (_key) EC_KEY_free(_key);
+    _key = NULL;
+
+    _cleared = YES;
+}
+
 // Verifies signature for a given hash with a public key.
 - (BOOL) isValidSignature:(NSData*)signature hash:(NSData*)hash
 {
+    CHECK_IF_CLEARED;
+
     if (hash.length == 0 || signature.length == 0) return NO;
     
     // -1 = error, 0 = bad sig, 1 = good
@@ -101,11 +141,96 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 // Returns a signature data for a 256-bit hash using private key.
 - (NSData*)signatureForHash:(NSData*)hash
 {
-    ECDSA_SIG *sig = ECDSA_do_sign((unsigned char*)hash.bytes, (int)hash.length, _key);
-    if (sig == NULL)
+    return [self signatureForHash:hash appendHashType:NO hashType:0];
+}
+
+// Same as above, but also appends a hash type byte to the signature.
+- (NSData*)signatureForHash:(NSData*)hash hashType:(BTCSignatureHashType)hashType
+{
+   return [self signatureForHash:hash appendHashType:YES hashType:hashType];
+}
+
+- (NSData*)signatureForHash:(NSData*)hash withHashType:(BTCSignatureHashType)hashType
+{
+    return [self signatureForHash:hash appendHashType:YES hashType:hashType];
+}
+
+- (NSData*)signatureForHash:(NSData*)hash appendHashType:(BOOL)appendHashType hashType:(BTCSignatureHashType)hashType
+{
+    CHECK_IF_CLEARED;
+
+    // ECDSA signature is a pair of numbers: (Kx, s)
+    // Where Kx = x coordinate of k*G mod n (n is the order of secp256k1).
+    // And s = (k^-1)*(h + Kx*privkey).
+    // By default, k is chosen randomly on interval [0, n - 1].
+    // But this makes signatures harder to test and allows faulty or backdoored RNGs to leak private keys from ECDSA signatures.
+    // To avoid these issues, we'll generate k = Hash256(hash || privatekey) and make all computations by hand.
+    //
+    // Note: if one day you think it's a good idea to mix in some extra entropy as an option,
+    //       ask yourself why Hash(message || privkey) is not unpredictable enough.
+    //       IMHO, it is as predictable as privkey and making it any stronger has no point since
+    //       guessing the privkey allows anyone to do the same as guessing the k: sign any
+    //       other transaction with that key. Also, the same hash function is used for computing
+    //       the message hash and needs to be preimage resistant. If it's weak, anyone can recover the
+    //       private key from a few observed signatures. Using the same function to derive k therefore
+    //       does not make the signature any less secure.
+    //
+   
+    ECDSA_SIG sigValue;
+    ECDSA_SIG *sig = NULL;
+    
+    if (1 /* deterministic signature with nonce derived from message and private key */)
     {
-        return nil;
+        sig = &sigValue;
+        
+        const BIGNUM *privkeyBIGNUM = EC_KEY_get0_private_key(_key);
+        
+        BTCMutableBigNumber* privkeyBN = [[BTCMutableBigNumber alloc] initWithBIGNUM:privkeyBIGNUM];
+        NSMutableData* privkeyData = [self privateKey];
+        
+        BTCBigNumber* n = [BTCCurvePoint curveOrder];
+
+        NSMutableData* kdata = BTCHMACSHA256(privkeyData, hash);
+        BTCMutableBigNumber* k = [[BTCMutableBigNumber alloc] initWithUnsignedData:kdata];
+        [k mod:n]; // make sure k belongs to [0, n - 1]
+        
+        BTCDataClear(kdata);
+        BTCDataClear(privkeyData);
+        
+        BTCCurvePoint* K = [[BTCCurvePoint generator] multiply:k];
+        BTCBigNumber* Kx = K.x;
+        
+        BTCBigNumber* hashBN = [[BTCBigNumber alloc] initWithUnsignedData:hash];
+        
+        // Compute s = (k^-1)*(h + Kx*privkey)
+        
+        BTCBigNumber* signatureBN = [[[privkeyBN multiply:Kx mod:n] add:hashBN mod:n] multiply:[k inverseMod:n] mod:n];
+        
+        //NSLog(@"ECDSA: r = %@", Kx.hexString);
+        //NSLog(@"ECDSA: s = %@", signatureBN.hexString);
+        BIGNUM r; BN_init(&r); BN_copy(&r, Kx.BIGNUM);
+        BIGNUM s; BN_init(&s); BN_copy(&s, signatureBN.BIGNUM);
+        
+        [privkeyBN clear];
+        [k clear];
+        [hashBN clear];
+        [K clear];
+        [Kx clear];
+        [signatureBN clear];
+        
+        sig->r = &r;
+        sig->s = &s;
     }
+    else
+    {
+// Non-deterministic ECDSA signature using OpenSSL's RNG.
+//        sig = ECDSA_do_sign((unsigned char*)hash.bytes, (int)hash.length, _key);
+//        if (sig == NULL)
+//        {
+//            return nil;
+//        }
+    }
+    
     BN_CTX *ctx = BN_CTX_new();
     BN_CTX_start(ctx);
     
@@ -127,31 +252,47 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
     
     unsigned char *pos = (unsigned char *)signature.mutableBytes;
     sigSize = i2d_ECDSA_SIG(sig, &pos);
-    ECDSA_SIG_free(sig);
+    
+//    if (!deterministic)
+//    {
+//        ECDSA_SIG_free(sig); // sig was dynamically allocated by ECDSA_do_sign
+//    }
+    
     [signature setLength:sigSize];  // Shrink to fit actual size
+    
+    if (appendHashType)
+    {
+        [signature appendBytes:&hashType length:sizeof(hashType)];
+    }
+
     
     return signature;
     
-//    unsigned int sigSize = ECDSA_size(_key);
-//    NSMutableData* signature = [NSMutableData dataWithLength:sigSize];
-//    
-//    if (!ECDSA_sign(0, (unsigned char*)hash.bytes, (int)hash.length, signature.mutableBytes, &sigSize, _key))
-//    {
-//        BTCDataClear(signature);
-//        return nil;
-//    }
-//    [signature setLength:sigSize];
-//    
-//    return signature;
+    // This code is simpler but it produces random signatures and does not canonicalize S as done above.
+    // 
+    //    unsigned int sigSize = ECDSA_size(_key);
+    //    NSMutableData* signature = [NSMutableData dataWithLength:sigSize];
+    //
+    //    if (!ECDSA_sign(0, (unsigned char*)hash.bytes, (int)hash.length, signature.mutableBytes, &sigSize, _key))
+    //    {
+    //        BTCDataClear(signature);
+    //        return nil;
+    //    }
+    //    [signature setLength:sigSize];
+    //    
+    //    return signature;
 }
+
 
 - (NSMutableData*) publicKey
 {
+    CHECK_IF_CLEARED;
     return [NSMutableData dataWithData:[self publicKeyCached]];
 }
 
-- (NSData*) publicKeyCached
+- (NSMutableData*) publicKeyCached
 {
+    CHECK_IF_CLEARED;
     if (!_publicKey)
     {
         _publicKey = [self publicKeyWithCompression:_publicKeyCompressed];
@@ -172,6 +313,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (NSMutableData*) publicKeyWithCompression:(BOOL)compression
 {
+    CHECK_IF_CLEARED;
     if (!_key) return nil;
     EC_KEY_set_conv_form(_key, compression ? POINT_CONVERSION_COMPRESSED : POINT_CONVERSION_UNCOMPRESSED);
     int length = i2o_ECPublicKey(_key, NULL);
@@ -185,6 +327,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (BTCCurvePoint*) curvePoint
 {
+    CHECK_IF_CLEARED;
     const EC_POINT* ecpoint = EC_KEY_get0_public_key(_key);
     BTCCurvePoint* cp = [[BTCCurvePoint alloc] initWithEC_POINT:ecpoint];
     return cp;
@@ -192,6 +335,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (NSMutableData*) DERPrivateKey
 {
+    CHECK_IF_CLEARED;
     if (!_key) return nil;
     int length = i2d_ECPrivateKey(_key, NULL);
     if (!length) return nil;
@@ -203,6 +347,8 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (NSMutableData*) privateKey
 {
+    CHECK_IF_CLEARED;
+    if (!_key) return nil;
     const BIGNUM *bignum = EC_KEY_get0_private_key(_key);
     if (!bignum) return nil;
     int num_bytes = BN_num_bytes(bignum);
@@ -212,8 +358,21 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
     return data;
 }
 
+- (NSString*) WIF
+{
+    if (!self.privateKey) return nil;
+    return [self privateKeyAddress].base58String;
+}
+
+- (NSString*) WIFTestnet
+{
+    if (!self.privateKey) return nil;
+    return [self privateKeyAddressTestnet].base58String;
+}
+
 - (void) setPublicKey:(NSData *)publicKey
 {
+    CHECK_IF_CLEARED;
     if (publicKey.length == 0) return;
     _publicKey = [NSMutableData dataWithData:publicKey];
     
@@ -231,6 +390,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (void) setDERPrivateKey:(NSData *)DERPrivateKey
 {
+    CHECK_IF_CLEARED;
     if (!DERPrivateKey) return;
     
     BTCDataClear(_publicKey); _publicKey = nil;
@@ -245,6 +405,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (void) setPrivateKey:(NSData *)privateKey
 {
+    CHECK_IF_CLEARED;
     if (!privateKey) return;
     
     BTCDataClear(_publicKey); _publicKey = nil;
@@ -262,44 +423,33 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (BOOL) isPublicKeyCompressed
 {
+    CHECK_IF_CLEARED;
     return _publicKeyCompressed;
 }
 
 - (void) setPublicKeyCompressed:(BOOL)flag
 {
+    CHECK_IF_CLEARED;
     _publicKey = nil;
     _publicKeyCompressed = flag;
 }
 
-- (void) clear
-{
-    BTCDataClear(_publicKey);
-    _publicKey = nil;
-    
-    // I couldn't find how to clear sensitive key data in OpenSSL,
-    // so I just replace existing key with a new one.
-    // Correct me if I'm doing it wrong.
-    [self generateKeyPair];
-    
-    if (_key) EC_KEY_free(_key);
-    _key = NULL;
-}
-
-
 - (void) generateKeyPair
 {
+    CHECK_IF_CLEARED;
     [self prepareKeyIfNeeded];
     NSMutableData* secret = [NSMutableData dataWithLength:32];
     unsigned char* bytes = secret.mutableBytes;
     do {
         RAND_bytes(bytes, 32);
-    } while (!BTCCheckPrivateKeyRange(bytes));
+    } while (!BTCKeyCheckPrivateKeyRange(bytes, 32));
     [self setPrivateKey:secret];
     BTCDataClear(secret);
 }
 
 - (void) prepareKeyIfNeeded
 {
+    CHECK_IF_CLEARED;
     if (_key) return;
     _key = EC_KEY_new_by_curve_name(NID_secp256k1);
     if (!_key)
@@ -317,6 +467,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (id) copy
 {
+    CHECK_IF_CLEARED;
     BTCKey* newKey = [[BTCKey alloc] initWithNewKeyPair:NO];
     if (_key) newKey->_key = EC_KEY_dup(_key);
     return newKey;
@@ -324,23 +475,25 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (BOOL) isEqual:(BTCKey*)otherKey
 {
+    CHECK_IF_CLEARED;
     if (![otherKey isKindOfClass:[self class]]) return NO;
     return [self.publicKeyCached isEqual:otherKey.publicKeyCached];
 }
 
 - (NSUInteger) hash
 {
+    CHECK_IF_CLEARED;
     return [self.publicKeyCached hash];
 }
 
 - (NSString*) description
 {
-    return [NSString stringWithFormat:@"<BTCKey:0x%p %@>", self, BTCHexStringFromData(self.publicKeyCached)];
+    return [NSString stringWithFormat:@"<BTCKey:0x%p %@>", self, BTCHexFromData(self.publicKeyCached)];
 }
 
 - (NSString*) debugDescription
 {
-    return [NSString stringWithFormat:@"<BTCKey:0x%p pubkey:%@ privkey:%@>", self, BTCHexStringFromData(self.publicKeyCached), BTCHexStringFromData(self.privateKey)];
+    return [NSString stringWithFormat:@"<BTCKey:0x%p pubkey:%@ privkey:%@>", self, BTCHexFromData(self.publicKeyCached), BTCHexFromData(self.privateKey)];
 }
 
 
@@ -359,6 +512,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (BOOL) isValidPubKey:(NSData*)data
 {
+    CHECK_IF_CLEARED;
     NSUInteger length = data.length;
     return length > 0 && [self lengthOfPubKey:data] == length;
 }
@@ -384,17 +538,63 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 - (BTCPublicKeyAddress*) publicKeyAddress
 {
+    CHECK_IF_CLEARED;
     NSData* pubkey = [self publicKeyCached];
+    if (pubkey.length == 0) return nil;
+    return [BTCPublicKeyAddress addressWithData:BTCHash160(pubkey)];
+}
+
+- (BTCPublicKeyAddress*) address
+{
+    CHECK_IF_CLEARED;
+    NSData* pubkey = [self publicKeyCached];
+    if (pubkey.length == 0) return nil;
+    return [BTCPublicKeyAddress addressWithData:BTCHash160(pubkey)];
+}
+
+- (BTCPublicKeyAddressTestnet*) addressTestnet
+{
+    CHECK_IF_CLEARED;
+    NSData* pubkey = [self publicKeyCached];
+    if (pubkey.length == 0) return nil;
+    return [BTCPublicKeyAddressTestnet addressWithData:BTCHash160(pubkey)];
+}
+
+- (BTCPublicKeyAddress*) compressedPublicKeyAddress
+{
+    CHECK_IF_CLEARED;
+    NSData* pubkey = [self compressedPublicKey];
+    if (pubkey.length == 0) return nil;
+    return [BTCPublicKeyAddress addressWithData:BTCHash160(pubkey)];
+}
+
+- (BTCPublicKeyAddress*) uncompressedPublicKeyAddress
+{
+    CHECK_IF_CLEARED;
+    NSData* pubkey = [self uncompressedPublicKey];
     if (pubkey.length == 0) return nil;
     return [BTCPublicKeyAddress addressWithData:BTCHash160(pubkey)];
 }
 
 - (BTCPrivateKeyAddress*) privateKeyAddress
 {
-    NSMutableData* privkey = [self privateKey];
+    CHECK_IF_CLEARED;
+    NSMutableData* privkey = self.privateKey;
     if (privkey.length == 0) return nil;
     
-    BTCPrivateKeyAddress* result = [BTCPrivateKeyAddress addressWithData:privkey publicKeyCompressed:[self isPublicKeyCompressed]];
+    BTCPrivateKeyAddress* result = [BTCPrivateKeyAddress addressWithData:privkey publicKeyCompressed:self.isPublicKeyCompressed];
+    BTCDataClear(privkey);
+    return result;
+}
+
+
+- (BTCPrivateKeyAddressTestnet*) privateKeyAddressTestnet
+{
+    CHECK_IF_CLEARED;
+    NSMutableData* privkey = self.privateKey;
+    if (privkey.length == 0) return nil;
+
+    BTCPrivateKeyAddressTestnet* result = [BTCPrivateKeyAddressTestnet addressWithData:privkey publicKeyCompressed:self.isPublicKeyCompressed];
     BTCDataClear(privkey);
     return result;
 }
@@ -421,6 +621,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 //                  add 0x04 for compressed keys.
 - (NSData*) compactSignatureForHash:(NSData*)hash
 {
+    CHECK_IF_CLEARED;
     NSMutableData* sigdata = [NSMutableData dataWithLength:65];
     unsigned char* sigbytes = sigdata.mutableBytes;
     const unsigned char* hashbytes = hash.bytes;
@@ -506,6 +707,7 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 // Verifies signature of the hash with its public key.
 - (BOOL) isValidCompactSignature:(NSData*)signature forHash:(NSData*)hash
 {
+    CHECK_IF_CLEARED;
     BTCKey* key = [[self class] verifyCompactSignature:signature forHash:hash];
     return [key isEqual:self];
 }
@@ -567,36 +769,243 @@ static int     ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const 
 
 
 
+
+
+
+
+#pragma mark - Canonical Checks
+
+
+
+// Note: non-canonical pubkey could still be valid for EC internals of OpenSSL and thus accepted by Bitcoin nodes.
++ (BOOL) isCanonicalPublicKey:(NSData*)data error:(NSError**)errorOut
+{
+    NSUInteger length = data.length;
+    const char* bytes = [data bytes];
+    
+    // Non-canonical public key: too short
+    if (length < 33)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: too short.", @"")}];
+        return NO;
+    }
+    
+    if (bytes[0] == 0x04)
+    {
+        // Length of uncompressed key must be 65 bytes.
+        if (length == 65) return YES;
+        
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: length of uncompressed key must be 65 bytes.", @"")}];
+        
+        return NO;
+    }
+    else if (bytes[0] == 0x02 || bytes[0] == 0x03)
+    {
+        // Length of compressed key must be 33 bytes.
+        if (length == 33) return YES;
+        
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: length of compressed key must be 33 bytes.", @"")}];
+        
+        return NO;
+    }
+    
+    // Unknown public key format.
+    if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Unknown non-canonical public key.", @"")}];
+    
+    return NO;
+}
+
+
+
++ (BOOL) isCanonicalSignatureWithHashType:(NSData*)data verifyEvenS:(BOOL)verifyLowerS error:(NSError**)errorOut // deprecated
+{
+    return [self isCanonicalSignatureWithHashType:data verifyLowerS:verifyLowerS error:errorOut];
+}
+
++ (BOOL) isCanonicalSignatureWithHashType:(NSData*)data verifyLowerS:(BOOL)verifyLowerS error:(NSError**)errorOut
+{
+    // See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
+    // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
+    // Where R and S are not negative (their first byte has its highest bit not set), and not
+    // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
+    // in which case a single 0 byte is necessary and even required).
+    
+    NSInteger length = data.length;
+    const unsigned char* bytes = data.bytes;
+    
+    // Non-canonical signature: too short
+    if (length < 9)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: too short.", @"")}];
+        return NO;
+    }
+    
+    // Non-canonical signature: too long
+    if (length > 73)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: too long.", @"")}];
+        return NO;
+    }
+    
+    unsigned char nHashType = bytes[length - 1] & (~(SIGHASH_ANYONECANPAY));
+    
+    if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: unknown hashtype byte.", @"")}];
+        return NO;
+    }
+    
+    if (bytes[0] != 0x30)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: wrong type.", @"")}];
+        return NO;
+    }
+    
+    if (bytes[1] != length-3)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: wrong length marker.", @"")}];
+        return NO;
+    }
+    
+    unsigned int lenR = bytes[3];
+    
+    if (5 + lenR >= length)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S length misplaced.", @"")}];
+        return NO;
+    }
+    
+    unsigned int lenS = bytes[5+lenR];
+    
+    if ((unsigned long)(lenR+lenS+7) != length)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R+S length mismatch", @"")}];
+        return NO;
+    }
+    
+    const unsigned char *R = &bytes[4];
+    if (R[-2] != 0x02)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value type mismatch", @"")}];
+        return NO;
+    }
+    if (lenR == 0)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R length is zero", @"")}];
+        return NO;
+    }
+    
+    if (R[0] & 0x80)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value negative", @"")}];
+        return NO;
+    }
+    
+    if (lenR > 1 && (R[0] == 0x00) && !(R[1] & 0x80))
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value excessively padded", @"")}];
+        return NO;
+    }
+    
+    const unsigned char *S = &bytes[6+lenR];
+    if (S[-2] != 0x02)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value type mismatch", @"")}];
+        return NO;
+    }
+    
+    if (lenS == 0)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S length is zero", @"")}];
+        return NO;
+    }
+    
+    if (S[0] & 0x80)
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value is negative", @"")}];
+        return NO;
+    }
+    
+    if (lenS > 1 && (S[0] == 0x00) && !(S[1] & 0x80))
+    {
+        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value excessively padded", @"")}];
+        return NO;
+    }
+    
+    if (verifyLowerS)
+    {
+        if (!BTCKeyCheckSignatureElement(S, lenS, YES))
+        {
+            if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain
+                                                          code:BTCErrorNonCanonicalScriptSignature
+                                                      userInfo:@{NSLocalizedDescriptionKey:
+                                                                     NSLocalizedString(@"Non-canonical signature: S value is unnecessarily high", @"")}];
+            return NO;
+        }
+    }
+    
+    return YES;
+}
+
 @end
 
 
 
-static BOOL BTCCheckPrivateKeyRange(const unsigned char *secret)
+// Order of secp256k1's generator minus 1.
+static const unsigned char BTCKeyMaxModOrder[32] = {
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
+    0xBA,0xAE,0xDC,0xE6,0xAF,0x48,0xA0,0x3B,
+    0xBF,0xD2,0x5E,0x8C,0xD0,0x36,0x41,0x40
+};
+
+// Half of the order of secp256k1's generator minus 1.
+static const unsigned char BTCKeyMaxModHalfOrder[32] = {
+    0x7F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0x5D,0x57,0x6E,0x73,0x57,0xA4,0x50,0x1D,
+    0xDF,0xE9,0x2F,0x46,0x68,0x1B,0x20,0xA0
+};
+
+static const unsigned char BTCKeyZero[0] = {};
+
+NSComparisonResult BTCKeyCompareBigEndian(const unsigned char *c1, size_t c1len,
+                                          const unsigned char *c2, size_t c2len)
 {
-    // Do not convert to OpenSSL's data structures for range-checking keys,
-    // it's easy enough to do directly.
-    static const unsigned char maxPrivateKey[32] = {
-        0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
-        0xBA,0xAE,0xDC,0xE6,0xAF,0x48,0xA0,0x3B,0xBF,0xD2,0x5E,0x8C,0xD0,0x36,0x41,0x40
-    };
-    BOOL isZero = YES;
-    for (int i = 0; i < 32 && isZero; i++)
+    while (c1len > c2len)
     {
-        if (secret[i] != 0)
-        {
-            isZero = NO;
-        }
+        if (*c1 > 0) return NSOrderedDescending;
+        c1++;
+        c1len--;
     }
-    if (isZero) return NO;
-    
-    for (int i = 0; i < 32; i++)
+    while (c2len > c1len)
     {
-        if (secret[i] < maxPrivateKey[i]) return YES;
-        if (secret[i] > maxPrivateKey[i]) return NO;
+        if (*c2 > 0) return NSOrderedAscending;
+        c2++;
+        c2len--;
     }
-    return YES;
+    while (c1len > 0)
+    {
+        if (*c1 > *c2) return NSOrderedDescending;
+        if (*c2 > *c1) return NSOrderedAscending;
+        c1++;
+        c2++;
+        c1len--;
+    }
+    return NSOrderedSame;
 }
 
+static BOOL BTCKeyCheckPrivateKeyRange(const unsigned char *secret, size_t length)
+{
+    return BTCKeyCompareBigEndian(secret, length, BTCKeyZero, 0) > 0 &&
+           BTCKeyCompareBigEndian(secret, length, BTCKeyMaxModOrder, 32) <= 0;
+}
+
+static BOOL BTCKeyCheckSignatureElement(const unsigned char *bytes, int length, BOOL half)
+{
+    return BTCKeyCompareBigEndian(bytes, length, BTCKeyZero, 0) > 0 &&
+           BTCKeyCompareBigEndian(bytes, length, half ? BTCKeyMaxModHalfOrder : BTCKeyMaxModOrder, 32) <= 0;
+}
 
 static NSData* BTCSignatureHashForBinaryMessage(NSData* msg)
 {

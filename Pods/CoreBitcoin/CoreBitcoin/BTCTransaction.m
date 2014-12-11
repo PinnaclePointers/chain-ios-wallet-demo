@@ -7,14 +7,19 @@
 #import "BTCData.h"
 #import "BTCScript.h"
 #import "BTCErrors.h"
+#import "BTCHashID.h"
+
+NSData* BTCTransactionHashFromID(NSString* txid)
+{
+    return BTCHashFromID(txid);
+}
+
+NSString* BTCTransactionIDFromHash(NSData* txhash)
+{
+    return BTCIDFromHash(txhash);
+}
 
 @interface BTCTransaction ()
-@property(nonatomic, readwrite) NSData* transactionHash;
-@property(nonatomic, readwrite) NSString* displayTransactionHash;
-@property(nonatomic, readwrite) NSArray* inputs;
-@property(nonatomic, readwrite) NSArray* outputs;
-@property(nonatomic, readwrite) NSData* data;
-@property(nonatomic, readwrite) uint32_t version;
 @end
 
 @implementation BTCTransaction
@@ -28,6 +33,11 @@
         _lockTime = 0;
         _inputs = @[];
         _outputs = @[];
+        _blockHeight = 0;
+        _blockDate = nil;
+        _confirmations = NSNotFound;
+        _fee = -1;
+        _inputsAmount = -1;
     }
     return self;
 }
@@ -40,6 +50,12 @@
         if (![self parseData:data]) return nil;
     }
     return self;
+}
+
+// Parses tx from hex string.
+- (id) initWithHex:(NSString*)hex
+{
+    return [self initWithData:BTCDataFromHex(hex)];
 }
 
 // Parses input stream (useful when parsing many transactions from a single source, e.g. a block).
@@ -84,15 +100,20 @@
 // Returns a dictionary representation suitable for encoding in JSON or Plist.
 - (NSDictionary*) dictionaryRepresentation
 {
+    return self.dictionary;
+}
+
+- (NSDictionary*) dictionary
+{
     return @{
-      @"hash":      self.displayTransactionHash,
+      @"hash":      self.transactionID,
       @"ver":       @(_version),
       @"vin_sz":    @(_inputs.count),
       @"vout_sz":   @(_outputs.count),
       @"lock_time": @(_lockTime),
       @"size":      @(self.data.length),
-      @"in":        [_inputs valueForKey:@"dictionaryRepresentation"],
-      @"out":       [_outputs valueForKey:@"dictionaryRepresentation"],
+      @"in":        [_inputs valueForKey:@"dictionary"],
+      @"out":       [_outputs valueForKey:@"dictionary"],
     };
 }
 
@@ -123,10 +144,8 @@
 - (id) copyWithZone:(NSZone *)zone
 {
     BTCTransaction* tx = [[BTCTransaction alloc] init];
-    tx.transactionHash = self.transactionHash;
-    tx.displayTransactionHash = self.displayTransactionHash;
-    tx.inputs = [[NSArray alloc] initWithArray:self.inputs copyItems:YES]; // so each element is copied individually
-    tx.outputs = [[NSArray alloc] initWithArray:self.outputs copyItems:YES]; // so each element is copied individually
+    tx->_inputs = [[NSArray alloc] initWithArray:self.inputs copyItems:YES]; // so each element is copied individually
+    tx->_outputs = [[NSArray alloc] initWithArray:self.outputs copyItems:YES]; // so each element is copied individually
     for (BTCTransactionInput* txin in tx.inputs)
     {
         txin.transaction = self;
@@ -135,9 +154,16 @@
     {
         txout.transaction = self;
     }
-    tx.data = [self.data copy];
     tx.version = self.version;
     tx.lockTime = self.lockTime;
+
+    // Copy informational properties as is.
+    tx.blockHash     = [_blockHash copy];
+    tx.blockHeight   = _blockHeight;
+    tx.blockDate     = _blockDate;
+    tx.confirmations = _confirmations;
+    tx.userInfo      = _userInfo;
+
     return tx;
 }
 
@@ -149,31 +175,36 @@
 - (NSData*) transactionHash
 {
     return BTCHash256(self.data);
-//    if (!_transactionHash)
-//    {
-//        _transactionHash = BTCHash256(self.data);
-//    }
-//    return _transactionHash;
 }
 
-- (NSString*) displayTransactionHash
+- (NSString*) displayTransactionHash // deprecated
 {
-    return BTCHexStringFromData(BTCReversedData(self.transactionHash));
-//    if (!_displayTransactionHash)
-//    {
-//        _displayTransactionHash = BTCHexStringFromData(BTCReversedData(self.transactionHash));
-//    }
-//    return _displayTransactionHash;
+    return self.transactionID;
+}
+
+- (NSString*) transactionID
+{
+    return BTCIDFromHash(self.transactionHash);
+}
+
+- (NSString*) blockID
+{
+    return BTCIDFromHash(self.blockHash);
+}
+
+- (void) setBlockID:(NSString *)blockID
+{
+    self.blockHash = BTCHashFromID(blockID);
 }
 
 - (NSData*) data
 {
     return [self computePayload];
-//    if (!_data)
-//    {
-//        _data = [self computePayload];
-//    }
-//    return _data;
+}
+
+- (NSString*) hex
+{
+    return BTCHexFromData(self.data);
 }
 
 - (NSData*) computePayload
@@ -209,21 +240,6 @@
     return payload;
 }
 
-- (void) invalidatePayload
-{
-    // These ivars will be recomputed next time their properties are accessed.
-    _transactionHash = nil;
-    _displayTransactionHash = nil;
-    _data = nil;
-}
-
-- (void) setLockTime:(uint32_t)lockTime
-{
-    if (_lockTime == lockTime) return;
-    _lockTime = lockTime;
-    [self invalidatePayload];
-}
-
 
 #pragma mark - Methods
 
@@ -240,7 +256,6 @@
     }
     input.transaction = self;
     _inputs = [_inputs arrayByAddingObject:input];
-    [self invalidatePayload];
 }
 
 // Adds output script
@@ -253,17 +268,37 @@
         @throw [NSException exceptionWithName:@"BTCTransaction consistency error!" reason:@"Can't add an output to a transaction when it references another transaction." userInfo:nil];
         return;
     }
-    output.index = BTCTransactionOutputIndexUnknown;
-    output.transactionHash = nil;
+    output.index = BTCTransactionOutputIndexUnknown; // reset to be recomputed lazily later
+    output.transactionHash = nil; // can't be reliably set here because transaction may get updated.
     output.transaction = self;
     _outputs = [_outputs arrayByAddingObject:output];
-    [self invalidatePayload];
+}
+
+- (void) setInputs:(NSArray *)inputs
+{
+    [self removeAllInputs];
+    for (BTCTransactionInput* txin in inputs)
+    {
+        [self addInput:txin];
+    }
+}
+
+- (void) setOutputs:(NSArray *)outputs
+{
+    [self removeAllOutputs];
+    for (BTCTransactionOutput* txout in outputs)
+    {
+        [self addOutput:txout];
+    }
 }
 
 - (void) removeAllInputs
 {
+    for (BTCTransactionInput* txin in _inputs)
+    {
+        txin.transaction = nil;
+    }
     _inputs = @[];
-    [self invalidatePayload];
 }
 
 - (void) removeAllOutputs
@@ -273,7 +308,6 @@
         txout.transaction = nil;
     }
     _outputs = @[];
-    [self invalidatePayload];
 }
 
 - (BOOL) isCoinbase
@@ -334,8 +368,6 @@
     }
     
     if ([stream read:(uint8_t*)&_lockTime maxLength:sizeof(_lockTime)] != sizeof(_lockTime)) return NO;
-    
-    [self invalidatePayload];
     
     return YES;
 }
@@ -449,22 +481,19 @@
         [tx addInput:input];
     }
     
-    [tx invalidatePayload];
-    
     // Important: we have to hash transaction together with its hash type.
-    
+    // Hash type is appended as little endian uint32 unlike 1-byte suffix of the signature.
     NSMutableData* fulldata = [tx.data mutableCopy];
-    
     uint32_t hashType32 = OSSwapHostToLittleInt32((uint32_t)hashType);
     [fulldata appendBytes:&hashType32 length:sizeof(hashType32)];
     
     NSData* hash = BTCHash256(fulldata);
     
 //    NSLog(@"\n----------------------\n");
-//    NSLog(@"TX: %@", BTCHexStringFromData(fulldata));
-//    NSLog(@"TX SUBSCRIPT: %@ (%@)", BTCHexStringFromData(subscript.data), subscript);
-//    NSLog(@"TX HASH: %@", BTCHexStringFromData(hash));
-//    NSLog(@"TX PLIST: %@", tx.dictionaryRepresentation);
+//    NSLog(@"TX: %@", BTCHexFromData(fulldata));
+//    NSLog(@"TX SUBSCRIPT: %@ (%@)", BTCHexFromData(subscript.data), subscript);
+//    NSLog(@"TX HASH: %@", BTCHexFromData(hash));
+//    NSLog(@"TX PLIST: %@", tx.dictionary);
     
     return hash;
 }
@@ -472,32 +501,139 @@
 
 
 
+
+
+#pragma mark - Amounts and fee
+
+
+
+@synthesize fee=_fee;
+@synthesize inputsAmount=_inputsAmount;
+
+- (void) setFee:(BTCAmount)fee
+{
+    _fee = fee;
+    _inputsAmount = -1; // will be computed from fee or inputs.map(&:value)
+}
+
+- (BTCAmount) fee
+{
+    if (_fee != -1) {
+        return _fee;
+    }
+
+    BTCAmount ia = self.inputsAmount;
+    if (ia != -1) {
+        return ia - self.outputsAmount;
+    }
+
+    return -1;
+}
+
+- (void) setInputsAmount:(BTCAmount)inputsAmount
+{
+    _inputsAmount = inputsAmount;
+    _fee = -1; // will be computed from inputs and outputs amount on the fly.
+}
+
+- (BTCAmount) inputsAmount
+{
+    if (_inputsAmount != -1) {
+        return _inputsAmount;
+    }
+
+    if (_fee != -1) {
+        return _fee + self.outputsAmount;
+    }
+
+    // Try to figure the total amount from amounts on inputs.
+    // If all of them are non-nil, we have a valid amount.
+
+    BTCAmount total = 0;
+    for (BTCTransactionInput* txin in self.inputs) {
+        BTCAmount v = txin.value;
+        if (v == -1) {
+            return -1;
+        }
+        total += v;
+    }
+    return total;
+}
+
+- (BTCAmount) outputsAmount
+{
+    BTCAmount a = 0;
+    for (BTCTransactionOutput* txout in self.outputs) {
+        a += txout.value;
+    }
+    return a;
+}
+
+
+
+
+
+
 #pragma mark - Fees
 
 
+
+// Computes estimated fee for this tx size using default fee rate.
+// @see BTCTransactionDefaultFeeRate.
+- (BTCAmount) estimatedFee
+{
+    return [self estimatedFeeWithRate:BTCTransactionDefaultFeeRate];
+}
+
+// Computes estimated fee for this tx size using specified fee rate (satoshis per 1000 bytes).
+- (BTCAmount) estimatedFeeWithRate:(BTCAmount)feePerK
+{
+    return [BTCTransaction estimateFeeForSize:self.data.length feeRate:feePerK];
+}
+
+// Computes estimated fee for the given tx size using specified fee rate (satoshis per 1000 bytes).
++ (BTCAmount) estimateFeeForSize:(NSInteger)txsize feeRate:(BTCAmount)feePerK
+{
+    if (feePerK <= 0) return 0;
+    BTCAmount fee = 0;
+    while (txsize > 0) // add fee rate for each (even incomplete) 1K byte chunk
+    {
+        txsize -= 1000;
+        fee += feePerK;
+    }
+    return fee;
+}
+
+
+
+
+// TO BE REVIEWED:
+
+
+
 // Minimum base fee to send a transaction.
-+ (BTCSatoshi) minimumFee
++ (BTCAmount) minimumFee
 {
     NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"BTCTransactionMinimumFee"];
     if (!n) return 10000;
-    return (BTCSatoshi)[n longLongValue];
+    return (BTCAmount)[n longLongValue];
 }
 
-+ (void) setMinimumFee:(BTCSatoshi)fee
++ (void) setMinimumFee:(BTCAmount)fee
 {
     fee = MIN(fee, BTC_MAX_MONEY);
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithLongLong:fee] forKey:@"BTCTransactionMinimumFee"];
 }
 
 // Minimum base fee to relay a transaction.
-+ (BTCSatoshi) minimumRelayFee
++ (BTCAmount) minimumRelayFee
 {
     NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"BTCTransactionMinimumRelayFee"];
     if (!n) return 10000;
-    return (BTCSatoshi)[n longLongValue];
+    return (BTCAmount)[n longLongValue];
 }
 
-+ (void) setMinimumRelayFee:(BTCSatoshi)fee
++ (void) setMinimumRelayFee:(BTCAmount)fee
 {
     fee = MIN(fee, BTC_MAX_MONEY);
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithLongLong:fee] forKey:@"BTCTransactionMinimumRelayFee"];
@@ -505,18 +641,18 @@
 
 
 // Minimum fee to relay the transaction
-- (BTCSatoshi) minimumRelayFee
+- (BTCAmount) minimumRelayFee
 {
     return [self minimumFeeForSending:NO];
 }
 
 // Minimum fee to send the transaction
-- (BTCSatoshi) minimumSendFee
+- (BTCAmount) minimumSendFee
 {
     return [self minimumFeeForSending:YES];
 }
 
-- (BTCSatoshi) minimumFeeForSending:(BOOL)sending
+- (BTCAmount) minimumFeeForSending:(BOOL)sending
 {
     // See also CTransaction::GetMinFee in BitcoinQT and calculate_minimum_fee in bitcoin-ruby
     
@@ -525,10 +661,10 @@
     // BitcoinQT has some complex formulas to determine when we shouldn't allow free txs. To be done later.
     BOOL allowFree = YES;
     
-    BTCSatoshi baseFee = sending ? [BTCTransaction minimumFee] : [BTCTransaction minimumRelayFee];
+    BTCAmount baseFee = sending ? [BTCTransaction minimumFee] : [BTCTransaction minimumRelayFee];
     NSUInteger txSize = self.data.length;
     NSUInteger newBlockSize = baseBlockSize + txSize;
-    BTCSatoshi minFee = (1 + txSize / 1000) * baseFee;
+    BTCAmount minFee = (1 + txSize / 1000) * baseFee;
     
     if (allowFree)
     {

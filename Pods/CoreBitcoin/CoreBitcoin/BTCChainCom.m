@@ -11,8 +11,10 @@
 @implementation BTCChainCom
 
 // Initalizes a BTCChainCom object with a free API Token from http://chain.com
-- (id)initWithToken:(NSString *)token {
-    if (self = [super init]) {
+- (id)initWithToken:(NSString *)token
+{
+    if (self = [super init])
+    {
         self.token = token;
     }
     return self;
@@ -22,14 +24,15 @@
 - (NSMutableURLRequest*) requestForUnspentOutputsWithAddress:(BTCAddress*)address
 {
     NSString* pathString = [NSString stringWithFormat:@"addresses/%@/unspents", [address valueForKey:@"base58String"]];
-    NSURL* url = [self _newChainURLWithV1BitcoinPath:pathString];
+    NSURL* url = [self  chainURLWithV1BitcoinPath:pathString];
     NSMutableURLRequest* request = [[NSMutableURLRequest alloc] initWithURL:url];
     request.HTTPMethod = @"GET";
     return request;
 }
 
 // List of BTCTransactionOutput instances parsed from the response.
-- (NSArray*) unspentOutputsForResponseData:(NSData*)responseData error:(NSError**)errorOut {
+- (NSArray*) unspentOutputsForResponseData:(NSData*)responseData error:(NSError**)errorOut
+{
     if (!responseData) return nil;
     NSArray* array = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:errorOut];
     if (!array || ![array isKindOfClass:[NSArray class]]) return nil;
@@ -43,7 +46,7 @@
         txout.value = [item[@"value"] longLongValue];
         txout.script = [[BTCScript alloc] initWithString:item[@"script"]];
         txout.index = [item[@"output_index"] intValue];
-        txout.transactionHash = (BTCReversedData(BTCDataWithHexString(item[@"transaction_hash"])));
+        txout.transactionHash = (BTCReversedData(BTCDataFromHex(item[@"transaction_hash"])));
         [outputs addObject:txout];
     }
     
@@ -68,10 +71,10 @@
     if (data.length == 0) return nil;
     
     NSString* pathString = @"transactions";
-    NSURL* url = [self _newChainURLWithV1BitcoinPath:pathString];
+    NSURL* url = [self  chainURLWithV1BitcoinPath:pathString];
     NSMutableURLRequest* request = [[NSMutableURLRequest alloc] initWithURL:url];
     
-    NSDictionary *requestDictionary = @{@"hex":BTCHexStringFromData(data)};
+    NSDictionary *requestDictionary = @{@"hex":BTCHexFromData(data)};
     
     NSError *serializationError = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:requestDictionary options:0 error:&serializationError];
@@ -102,7 +105,8 @@
 
 #pragma mark -
 
-- (NSURL *)_newChainURLWithV1BitcoinPath:(NSString *)path {
+- (NSURL*) chainURLWithV1BitcoinPath:(NSString *)path
+{
     NSString *baseURLString = @"https://api.chain.com/v1/bitcoin";
     NSString *URLString = [NSString stringWithFormat:@"%@/%@?key=%@", baseURLString, path, self.token];
     return [NSURL URLWithString:URLString];

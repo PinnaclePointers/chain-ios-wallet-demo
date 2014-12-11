@@ -123,7 +123,7 @@
 }
 
 - (BTCAddress*) currentAddress {
-    return self.publicKey.publicKeyAddress;
+    return self.publicKey.address;
 }
 
 

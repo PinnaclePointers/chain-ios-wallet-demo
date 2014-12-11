@@ -13,7 +13,12 @@
 #define FIXED_FEE 10000
 
 @interface CNSendViewController ()
-@property BTCSatoshi balance;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *cancelButton;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *sendButton;
+@property (weak, nonatomic) IBOutlet UITextField *amountTextField;
+@property (weak, nonatomic) IBOutlet UILabel *sentToAddressLabel;
+@property (weak, nonatomic) IBOutlet UILabel *amountAvailable;
+@property (nonatomic) BTCAmount balance;
 @end
 
 @implementation CNSendViewController
@@ -21,11 +26,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self.amountTextField becomeFirstResponder];
-    [self.sentToAddressLabel setText: self.sendToAddress];
-    self.balance = [[[NSUserDefaults standardUserDefaults] valueForKey:@"balance"] unsignedIntegerValue];
+    self.sentToAddressLabel.text = self.address.string;
     
     // A transaction requires a miner fee
-    BTCSatoshi availableBalance = self.balance - FIXED_FEE;
+    BTCAmount availableBalance = self.balance - FIXED_FEE;
     self.amountAvailable.text = [NSString stringWithFormat:@"฿ %@ Available (after miner fee)", [NSString stringWithSatoshiInBTCFormat:availableBalance]];
 }
 
@@ -52,9 +56,9 @@
     
     __weak UIViewController *presentingViewController = self.presentingViewController;
 
-    BTCSatoshi fee = FIXED_FEE;
-    if ([self.sendToAddress length]) {
-        [CNBitcoinSendManager sendAmount:(NSUInteger)satoshiAmountInteger receiveAddresss:self.sendToAddress fee:fee completionHandler:^(NSDictionary *dictionary, NSError *error) {
+    BTCAmount fee = FIXED_FEE;
+    if (self.address) {
+        [CNBitcoinSendManager sendAmount:(NSUInteger)satoshiAmountInteger receiveAddresss:self.address.string fee:fee completionHandler:^(NSDictionary *dictionary, NSError *error) {
             NSLog(@"%@", dictionary);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (error) {
@@ -81,7 +85,7 @@
 
 - (void)presentConfirmationAlert {
     NSString *amountString = self.amountTextField.text;
-    NSString *confirmationMessage  = [NSString stringWithFormat:@"Are you sure you want to send ฿ %@ to %@?", amountString, self.sendToAddress];
+    NSString *confirmationMessage  = [NSString stringWithFormat:@"Are you sure you want to send ฿ %@ to %@?", amountString, self.address.string];
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Send Bitcoin?"
                                                         message:confirmationMessage
                                                        delegate:self

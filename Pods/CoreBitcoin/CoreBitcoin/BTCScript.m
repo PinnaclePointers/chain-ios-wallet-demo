@@ -5,6 +5,7 @@
 #import "BTCBigNumber.h"
 #import "BTCErrors.h"
 #import "BTCData.h"
+#import "BTCKey.h"
 
 
 @interface BTCScriptChunk ()
@@ -76,6 +77,11 @@
     return self;
 }
 
+- (id) initWithHex:(NSString*)hex
+{
+    return [self initWithData:BTCDataFromHex(hex)];
+}
+
 - (id) initWithString:(NSString*)string
 {
     if (self = [super init])
@@ -88,6 +94,9 @@
 
 - (id) initWithAddress:(BTCAddress*)address
 {
+    // Make sure we use a public address (WIF privkey is converted to usual P2PKH address).
+    address = [address publicAddress];
+
     if ([address isKindOfClass:[BTCPublicKeyAddress class]])
     {
         // OP_DUP OP_HASH160 <hash> OP_EQUALVERIFY OP_CHECKSIG
@@ -192,6 +201,11 @@
         _data = md;
     }
     return _data;
+}
+
+- (NSString*) hex
+{
+    return BTCHexFromData(self.data);
 }
 
 - (NSString*) string
@@ -342,7 +356,7 @@
             if ([scanner scanUpToString:@"]" intoString:&hexstring])
             {
                 // Check if hex string is valid.
-                NSData* data = BTCDataWithHexString(hexstring);
+                NSData* data = BTCDataFromHex(hexstring);
                 
                 if (!data) return nil; // hex string is invalid
                 
@@ -366,7 +380,7 @@
             NSString* hexstring = nil;
             if ([scanner scanUpToCharactersFromSet:whitespaceSet intoString:&hexstring])
             {
-                NSData* data = BTCDataWithHexString(hexstring);
+                NSData* data = BTCDataFromHex(hexstring);
                 
                 if (!data || data.length == 0) return nil; // hex string is invalid
                 
@@ -437,7 +451,7 @@
             
             // 6. Big pushdata in hex
             
-            NSData* data = BTCDataWithHexString(word);
+            NSData* data = BTCDataFromHex(word);
             
             if (!data || data.length == 0) return nil; // hex string is invalid
             
@@ -488,7 +502,7 @@
 
 - (BOOL) isStandard
 {
-    return [self isHash160Script]
+    return [self isPayToPublicKeyHashScript]
         || [self isPayToScriptHashScript]
         || [self isPublicKeyScript]
         || [self isStandardMultisignatureScript];
@@ -502,6 +516,11 @@
 }
 
 - (BOOL) isHash160Script
+{
+    return [self isPayToPublicKeyHashScript];
+}
+
+- (BOOL) isPayToPublicKeyHashScript
 {
     if (_chunks.count != 5) return NO;
     
@@ -637,7 +656,7 @@
 
 - (BTCAddress*) standardAddress
 {
-    if ([self isHash160Script])
+    if ([self isPayToPublicKeyHashScript])
     {
         if (_chunks.count != 5) return nil;
         
@@ -663,6 +682,146 @@
 }
 
 
+// Wraps the recipient into an output P2SH script (OP_HASH160 <20-byte hash of the recipient> OP_EQUAL).
+- (BTCScript*) scriptHashScript
+{
+    return [[BTCScript alloc] initWithAddress:[self scriptHashAddress]];
+}
+
+// Returns BTCScriptHashAddress that hashes this script.
+// Equivalent to [[script scriptHashScript] standardAddress] or [BTCScriptHashAddress addressWithData:BTCHash160(script.data)]
+- (BTCScriptHashAddress*) scriptHashAddress
+{
+    return [BTCScriptHashAddress addressWithData:BTCHash160(self.data)];
+}
+
+- (BTCScriptHashAddressTestnet*) scriptHashAddressTestnet
+{
+    return [BTCScriptHashAddressTestnet addressWithData:BTCHash160(self.data)];
+}
+
+
+
+
+#pragma mark - Simulation
+
+
+
+- (BTCScript*) simulatedSignatureScriptWithOptions:(BTCScriptSimulationOptions)opts
+{
+    if ([self isPayToPublicKeyHashScript])
+    {
+        BTCScript* script = [BTCScript new];
+        [script appendData:[BTCScript simulatedSignatureWithHashType:SIGHASH_ALL]];
+        [script appendData:(opts & BTCScriptSimulationCompressedPublicKeys) ? [BTCScript simulatedCompressedPubkey] : [BTCScript simulatedUncompressedPubkey]];
+        return script;
+    }
+    else if ([self isPublicKeyScript])
+    {
+        return [[BTCScript new] appendData:[BTCScript simulatedSignatureWithHashType:SIGHASH_ALL]];
+    }
+    else if ([self isPayToScriptHashScript])
+    {
+        // Check if allowed to simulate input for P2SH as 2-of-3 multisig.
+        if (opts & BTCScriptSimulationMultisigP2SH)
+        {
+            // This is a wild approximation, but works well if most p2sh scripts are 2-of-3 multisig scripts.
+            BTCScript* script = [BTCScript new];
+            [script appendOpcode:OP_0];
+            [script appendData:[BTCScript simulatedSignatureWithHashType:SIGHASH_ALL]];
+            [script appendData:[BTCScript simulatedSignatureWithHashType:SIGHASH_ALL]];
+            [script appendData:[BTCScript simulatedMultisigScriptWithSignaturesCount:2 pubkeysCount:3
+                                          compressedPubkeys:(opts & BTCScriptSimulationCompressedPublicKeys)].data];
+            return script;
+        }
+        else
+        {
+            // Can't figure how to simulate signature script for P2SH as it can be anything.
+            return nil;
+        }
+    }
+    else if ([self isMultisignatureScript])
+    {
+        BTCScript* script = [BTCScript new];
+        [script appendOpcode:OP_0];
+        for (NSInteger i = 0; i < _multisigSignaturesRequired; i++)
+        {
+            [script appendData:[BTCScript simulatedSignatureWithHashType:SIGHASH_ALL]];
+        }
+        return script;
+    }
+
+    // Any other type of script is not supported yet.
+    // However, it'd be fun to simulate those based on reverse-playback of the script opcodes.
+    return nil;
+}
+
+// Returns a simulated signature without a hashtype byte.
++ (NSData*) simulatedSignature
+{
+    // "\x30" + "\xff"*71
+    NSMutableData* sig = [NSMutableData dataWithLength:1 + 71];
+    memset(sig.mutableBytes, 0x30, 1);
+    memset(sig.mutableBytes + 1, 0xFF, 71);
+    return sig;
+}
+
+// Returns a simulated signature with a hashtype byte attached.
++ (NSData*) simulatedSignatureWithHashType:(BTCSignatureHashType)hashtype
+{
+    // "\x30" + "\xff"*71 + encode_uint8(hashtype)
+    NSMutableData* sig = [NSMutableData dataWithLength:1 + 71 + 1];
+    memset(sig.mutableBytes, 0x30, 1);
+    memset(sig.mutableBytes + 1, 0xFF, 71);
+    memset(sig.mutableBytes + 1 + 71, hashtype, 1);
+    return sig;
+}
+
+// Returns a dummy uncompressed pubkey (65 bytes).
++ (NSData*) simulatedUncompressedPubkey
+{
+    // "\x04" + "\xff"*64
+    NSMutableData* sig = [NSMutableData dataWithLength:1 + 64];
+    memset(sig.mutableBytes, 0x04, 1);
+    memset(sig.mutableBytes + 1, 0xFF, 64);
+    return sig;
+}
+
+// Returns a dummy compressed pubkey (33 bytes).
++ (NSData*) simulatedCompressedPubkey
+{
+    // "\x02" + "\xff"*32
+    NSMutableData* sig = [NSMutableData dataWithLength:1 + 32];
+    memset(sig.mutableBytes, 0x02, 1);
+    memset(sig.mutableBytes + 1, 0xFF, 32);
+    return sig;
+}
+
+// Returns a dummy script that simulates m-of-n multisig script
++ (BTCScript*) simulatedMultisigScriptWithSignaturesCount:(NSInteger)m pubkeysCount:(NSInteger)n compressedPubkeys:(BOOL)compressedPubkeys
+{
+    /*
+     Script.new <<
+     Opcode.opcode_for_small_integer(m) <<
+     [simulated_uncompressed_pubkey]*n  << # assuming non-compressed pubkeys to be conservative
+     Opcode.opcode_for_small_integer(n) <<
+     OP_CHECKMULTISIG
+     */
+    BTCScript* multisig = [BTCScript new];
+    [multisig appendOpcode:BTCOpcodeForSmallInteger(m)];
+    NSData* pubkey = compressedPubkeys ? [BTCScript simulatedCompressedPubkey] : [BTCScript simulatedUncompressedPubkey];
+    for (NSInteger i = 0; i < n; i++)
+    {
+        [multisig appendData:pubkey];
+    }
+    [multisig appendOpcode:BTCOpcodeForSmallInteger(n)];
+    return multisig;
+}
+
+
+
+
+
 
 #pragma mark - Modification
 
@@ -676,7 +835,7 @@
     _multisigPublicKeys = nil;
 }
 
-- (void) appendOpcode:(BTCOpcode)opcode
+- (BTCScript*) appendOpcode:(BTCOpcode)opcode
 {
     NSMutableData* scriptData = [self.data mutableCopy] ?: [NSMutableData data];
     
@@ -691,11 +850,13 @@
     for (BTCScriptChunk* chunk in _chunks) chunk.scriptData = scriptData;
     
     [self invalidateSerialization];
+
+    return self;
 }
 
-- (void) appendData:(NSData*)data
+- (BTCScript*) appendData:(NSData*)data
 {
-    if (data.length == 0) return;
+    if (data.length == 0) return self;
     
     NSMutableData* scriptData = [self.data mutableCopy] ?: [NSMutableData data];
     
@@ -711,11 +872,13 @@
     for (BTCScriptChunk* chunk in _chunks) chunk.scriptData = scriptData;
     
     [self invalidateSerialization];
+
+    return self;
 }
 
-- (void) appendScript:(BTCScript*)otherScript
+- (BTCScript*) appendScript:(BTCScript*)otherScript
 {
-    if (!otherScript) return;
+    if (!otherScript) return self;
     
     NSMutableData* scriptData = [self.data mutableCopy] ?: [NSMutableData data];
     
@@ -735,7 +898,47 @@
     for (BTCScriptChunk* chunk in _chunks) chunk.scriptData = scriptData;
 
     [self invalidateSerialization];
+
+    return self;
 }
+
+- (BTCScript*) deleteOccurrencesOfData:(NSData*)data
+{
+    if (data.length == 0) return self;
+    
+    NSMutableData* md = [NSMutableData data];
+    
+    for (BTCScriptChunk* chunk in _chunks)
+    {
+        if (![chunk.pushdata isEqual:data])
+        {
+            [md appendData:chunk.chunkData];
+        }
+    }
+    
+    _chunks = [self parseData:md];
+
+    return self;
+}
+
+- (BTCScript*) deleteOccurrencesOfOpcode:(BTCOpcode)opcode
+{
+    NSMutableData* md = [NSMutableData data];
+    
+    for (BTCScriptChunk* chunk in _chunks)
+    {
+        if (chunk.opcode != opcode)
+        {
+            [md appendData:chunk.chunkData];
+        }
+    }
+    
+    _chunks = [self parseData:md];
+
+    return self;
+}
+
+
 
 - (BTCScript*) subScriptFromIndex:(NSUInteger)index
 {
@@ -757,6 +960,8 @@
     return [[BTCScript alloc] initWithData:md];
 }
 
+
+
 - (id) copyWithZone:(NSZone *)zone
 {
     return [[BTCScript alloc] initWithData:self.data];
@@ -766,40 +971,6 @@
 {
     return [NSString stringWithFormat:@"<%@:0x%p \"%@\">", [self class], self, self.string];
 }
-
-- (void) deleteOccurrencesOfData:(NSData*)data
-{
-    if (data.length == 0) return;
-    
-    NSMutableData* md = [NSMutableData data];
-    
-    for (BTCScriptChunk* chunk in _chunks)
-    {
-        if (![chunk.pushdata isEqual:data])
-        {
-            [md appendData:chunk.chunkData];
-        }
-    }
-    
-    _chunks = [self parseData:md];
-}
-
-- (void) deleteOccurrencesOfOpcode:(BTCOpcode)opcode
-{
-    NSMutableData* md = [NSMutableData data];
-    
-    for (BTCScriptChunk* chunk in _chunks)
-    {
-        if (chunk.opcode != opcode)
-        {
-            [md appendData:chunk.chunkData];
-        }
-    }
-    
-    _chunks = [self parseData:md];
-}
-
-
 
 
 
@@ -851,169 +1022,17 @@
 
 
 
-#pragma mark - Canonical checks
+#pragma mark - Canonical checks (Deprecated methods - use BTCKey API)
 
 
-// Note: non-canonical pubkey could still be valid for EC internals of OpenSSL and thus accepted by Bitcoin nodes.
 + (BOOL) isCanonicalPublicKey:(NSData*)data error:(NSError**)errorOut
 {
-    NSUInteger length = data.length;
-    const char* bytes = [data bytes];
-    
-    // Non-canonical public key: too short
-    if (length < 33)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: too short.", @"")}];
-        return NO;
-    }
-    
-    if (bytes[0] == 0x04)
-    {
-        // Length of uncompressed key must be 65 bytes.
-        if (length == 65) return YES;
-        
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: length of uncompressed key must be 65 bytes.", @"")}];
-        
-        return NO;
-    }
-    else if (bytes[0] == 0x02 || bytes[0] == 0x03)
-    {
-        // Length of compressed key must be 33 bytes.
-        if (length == 33) return YES;
-        
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical public key: length of compressed key must be 33 bytes.", @"")}];
-        
-        return NO;
-    }
-    
-    // Unknown public key format.
-    if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalPublicKey userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Unknown non-canonical public key.", @"")}];
-    
-    return NO;
+    return [BTCKey isCanonicalPublicKey:data error:errorOut];
 }
-
-
 
 + (BOOL) isCanonicalSignature:(NSData*)data verifyEvenS:(BOOL)verifyEvenS error:(NSError**)errorOut
 {
-    // See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
-    // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
-    // Where R and S are not negative (their first byte has its highest bit not set), and not
-    // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
-    // in which case a single 0 byte is necessary and even required).
-    
-    NSInteger length = data.length;
-    const unsigned char* bytes = data.bytes;
-    
-    // Non-canonical signature: too short
-    if (length < 9)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: too short.", @"")}];
-        return NO;
-    }
-    
-    // Non-canonical signature: too long
-    if (length > 73)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: too long.", @"")}];
-        return NO;
-    }
-
-    unsigned char nHashType = bytes[length - 1] & (~(SIGHASH_ANYONECANPAY));
-    
-    if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: unknown hashtype byte.", @"")}];
-        return NO;
-    }
-    
-    if (bytes[0] != 0x30)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: wrong type.", @"")}];
-        return NO;
-    }
-    
-    if (bytes[1] != length-3)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: wrong length marker.", @"")}];
-        return NO;
-    }
-    
-    unsigned int nLenR = bytes[3];
-    
-    if (5 + nLenR >= length)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S length misplaced.", @"")}];
-        return NO;
-    }
-    
-    unsigned int nLenS = bytes[5+nLenR];
-    
-    if ((unsigned long)(nLenR+nLenS+7) != length)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R+S length mismatch", @"")}];
-        return NO;
-    }
-    
-    const unsigned char *R = &bytes[4];
-    if (R[-2] != 0x02)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value type mismatch", @"")}];
-        return NO;
-    }
-    if (nLenR == 0)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R length is zero", @"")}];
-        return NO;
-    }
-    
-    if (R[0] & 0x80)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value negative", @"")}];
-        return NO;
-    }
-    
-    if (nLenR > 1 && (R[0] == 0x00) && !(R[1] & 0x80))
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: R value excessively padded", @"")}];
-        return NO;
-    }
-    
-    const unsigned char *S = &bytes[6+nLenR];
-    if (S[-2] != 0x02)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value type mismatch", @"")}];
-        return NO;
-    }
-    
-    if (nLenS == 0)
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S length is zero", @"")}];
-        return NO;
-    }
-    
-    if (S[0] & 0x80)
-    {
-        return NO;
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value is negative", @"")}];
-    }
-    
-    if (nLenS > 1 && (S[0] == 0x00) && !(S[1] & 0x80))
-    {
-        if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value excessively padded", @"")}];
-        return NO;
-    }
-    
-    if (verifyEvenS)
-    {
-        if (S[nLenS-1] & 1)
-        {
-            if (errorOut) *errorOut = [NSError errorWithDomain:BTCErrorDomain code:BTCErrorNonCanonicalScriptSignature userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Non-canonical signature: S value is odd", @"")}];
-            return NO;
-        }
-    }
-    
-    return true;
+    return [BTCKey isCanonicalSignatureWithHashType:data verifyEvenS:verifyEvenS error:errorOut];
 }
 
 
@@ -1106,11 +1125,11 @@
     
     if (self.isOpcode)
     {
-        if (opcode == OP_0) return @"0";
-        if (opcode == OP_1NEGATE) return @"-1";
+        if (opcode == OP_0) return @"OP_0";
+        if (opcode == OP_1NEGATE) return @"OP_1NEGATE";
         if (opcode >= OP_1 && opcode <= OP_16)
         {
-            return [NSString stringWithFormat:@"%u", ((int)opcode + 1 - (int)OP_1)];
+            return [NSString stringWithFormat:@"OP_%u", ((int)opcode + 1 - (int)OP_1)];
         }
         else
         {
@@ -1125,7 +1144,7 @@
         // Empty data is encoded as OP_0.
         if (data.length == 0)
         {
-            string = @"0";
+            string = @"OP_0";
         }
         else if ([self isASCIIData:data])
         {
@@ -1140,7 +1159,7 @@
         }
         else
         {
-            string = BTCHexStringFromData(data);
+            string = BTCHexFromData(data);
             
             // Shorter than 128-bit chunks are wrapped in square brackets to avoid ambiguity with big all-decimal numbers.
             if (data.length < 16)

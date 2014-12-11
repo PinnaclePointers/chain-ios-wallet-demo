@@ -6,13 +6,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreBitcoin/CoreBitcoin.h>
 
 @interface CNSendViewController : UIViewController <UIAlertViewDelegate>
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *cancelButton;
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *sendButton;
-@property (weak, nonatomic) IBOutlet UITextField *amountTextField;
-@property (weak, nonatomic) IBOutlet UILabel *sentToAddressLabel;
-@property (weak, nonatomic) IBOutlet UILabel *amountAvailable;
-@property (nonatomic) NSString *sendToAddress;
-
+@property (nonatomic) BTCAddress* address;
+@property (nonatomic) BTCAmount amount;
 @end

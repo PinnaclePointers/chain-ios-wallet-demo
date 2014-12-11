@@ -4,11 +4,9 @@
 //
 //  Copyright (c) 2014 Chain Inc. All rights reserved.
 //
-
-#import "CNReceiveViewController.h"
-#import "QREncoder.h"
-#import "CNSecretStore.h"
 #import <CoreBitcoin/CoreBitcoin.h>
+#import "CNReceiveViewController.h"
+#import "CNSecretStore.h"
 
 @interface CNReceiveViewController()
 @property (weak, nonatomic) IBOutlet UIImageView *QREncoderView;
@@ -21,12 +19,11 @@
     [super viewDidLoad];
     [self.addressLabel setTitle:[self addressString] forState:UIControlStateNormal];
     self.addressLabel.titleLabel.textAlignment = NSTextAlignmentCenter;
-    self.QREncoderView.image = [QREncoder renderDataMatrix:[QREncoder encodeWithECLevel:1 version:1 string:[self addressString]]
-                                     imageDimension:self.QREncoderView.frame.size.width];
+    self.QREncoderView.image = [BTCQRCode imageForString:[self addressString] size:self.QREncoderView.frame.size scale:2.0];
 }
 
 - (NSString*) addressString {
-    return [CNSecretStore chainSecretStore].publicKey.publicKeyAddress.base58String;
+    return [CNSecretStore chainSecretStore].publicKey.address.string;
 }
 
 - (IBAction)dismissReceiveView:(id)sender {

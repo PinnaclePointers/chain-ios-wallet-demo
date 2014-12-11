@@ -7,15 +7,26 @@
 
 #import "CNAppDelegate.h"
 #import "CNSecretStore.h"
-#import "Chain.h"
 #import "UIColor+Additions.h"
+
+#import <Chain/Chain.h>
 #import <CoreBitcoin/CoreBitcoin.h>
+
+static NSString* CNSampleToken = @"2277e102b5d28a90700ff3062a282228";
 
 @implementation CNAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // REPLACE THIS LIMITED "GUEST-TOKEN" WITH YOUR API TOKEN FROM CHAIN.COM
-    [Chain sharedInstanceWithToken:@"2277e102b5d28a90700ff3062a282228"];
+
+#warning TODO: Replace this sample token with your actual token.
+    [Chain sharedInstanceWithToken:CNSampleToken];
+
+    // Uncomment to test the welcome screen. Backup your private key first.
+    if ((0)) {
+        [[CNSecretStore chainSecretStore] unlock:^(CNSecretStore *store) {
+            store.key = nil;
+        } reason:NSLocalizedString(@"Authorize removing the private key", @"")];
+    }
 
     // Style the navigation bar
     [[UINavigationBar appearance] setBarTintColor:[UIColor colorWithHex:0x1293C2]];
@@ -26,13 +37,6 @@
     
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    
-    // Uncomment to test the welcome screen. Backup your private key first.
-    if ((0)) {
-        [[CNSecretStore chainSecretStore] unlock:^(CNSecretStore *store) {
-            store.key = nil;
-        } reason:NSLocalizedString(@"Authorize removing the private key", @"")];
-    }
 
     // Show welcome screen if we haven't generated an address.
     BTCKey* pubkey = [CNSecretStore chainSecretStore].publicKey;

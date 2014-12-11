@@ -9,7 +9,7 @@
     @package
     BIGNUM _bignum;
     
-    // Used as a guard in case a private setter is called on immutable instance.
+    // Used as a guard in case a private setter is called on immutable instance after initialization.
     BOOL _immutable;
 }
 
@@ -318,7 +318,7 @@
     };
     
     BN_CTX* pctx = NULL;
-    BIGNUM bnBase; BN_init(&bnBase); BN_set_word(&bnBase, base);
+    BIGNUM bnBase; BN_init(&bnBase); BN_set_word(&bnBase, (BN_ULONG)base);
     
     while (1)
     {
@@ -377,7 +377,7 @@
     NSMutableData* resultData = nil;
     
     BN_CTX* pctx = BN_CTX_new();
-    BIGNUM bnBase; BN_init(&bnBase); BN_set_word(&bnBase, base);
+    BIGNUM bnBase; BN_init(&bnBase); BN_set_word(&bnBase, (BN_ULONG)base);
     BIGNUM bn0;    BN_init(&bn0);    BN_zero(&bn0);
     BIGNUM bn;     BN_init(&bn);     BN_copy(&bn, &_bignum);
     
@@ -388,7 +388,7 @@
     
     if (BN_cmp(&bn, &bn0) == 0)
     {
-        resultData = (NSMutableData*)[NSData dataWithBytes:"0" length:1];
+        resultData = [NSMutableData dataWithBytes:"0" length:1];
     }
     else
     {

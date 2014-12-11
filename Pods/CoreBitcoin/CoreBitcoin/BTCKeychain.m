@@ -6,14 +6,17 @@
 #import "BTCCurvePoint.h"
 #import "BTCBigNumber.h"
 #import "BTCBase58.h"
+#import "BTCAddress.h"
+
+#define CHECK_IF_CLEARED if (_cleared) { [[NSException exceptionWithName:@"BTCKeychain: instance was already cleared." reason:@"" userInfo:nil] raise]; }
 
 #define BTCKeychainPrivateExtendedKeyVersion 0x0488ADE4
 #define BTCKeychainPublicExtendedKeyVersion  0x0488B21E
 
 @interface BTCKeychain ()
-@property(nonatomic, readwrite) NSData* chainCode;
-@property(nonatomic, readwrite) NSData* extendedPublicKey;
-@property(nonatomic, readwrite) NSData* extendedPrivateKey;
+@property(nonatomic, readwrite) NSMutableData* chainCode;
+@property(nonatomic, readwrite) NSMutableData* extendedPublicKeyData;
+@property(nonatomic, readwrite) NSMutableData* extendedPrivateKeyData;
 @property(nonatomic, readwrite) NSData* identifier;
 @property(nonatomic, readwrite) uint32_t fingerprint;
 @property(nonatomic, readwrite) uint32_t parentFingerprint;
@@ -21,13 +24,29 @@
 @property(nonatomic, readwrite) uint8_t depth;
 @property(nonatomic, readwrite) BOOL hardened;
 
-@property(nonatomic) NSData* privateKey;
-@property(nonatomic) NSData* publicKey;
+@property(nonatomic) NSMutableData* privateKey;
+@property(nonatomic) NSMutableData* publicKey;
 @end
 
 @implementation BTCKeychain {
-    NSData* _chainCode;
+    BOOL _cleared;
 }
+
+- (void)dealloc
+{
+    [self clear];
+}
+
+- (void) clear
+{
+    BTCDataClear(_chainCode);
+    BTCDataClear(_extendedPublicKeyData);
+    BTCDataClear(_extendedPrivateKeyData);
+    BTCDataClear(_privateKey);
+    BTCDataClear(_publicKey);
+    _cleared = YES;
+}
+
 
 - (id) initWithSeed:(NSData*)seed
 {
@@ -35,20 +54,26 @@
     {
         if (!seed) return nil;
         
-        NSData* hmac = BTCHMACSHA512([@"Bitcoin seed" dataUsingEncoding:NSASCIIStringEncoding], seed);
-        _privateKey = [hmac subdataWithRange:NSMakeRange(0, 32)];
-        _chainCode  = [hmac subdataWithRange:NSMakeRange(32, 32)];
+        NSMutableData* hmac = BTCHMACSHA512([@"Bitcoin seed" dataUsingEncoding:NSASCIIStringEncoding], seed);
+        _privateKey = BTCDataRange(hmac, NSMakeRange(0, 32));
+        _chainCode  = BTCDataRange(hmac, NSMakeRange(32, 32));
+        BTCDataClear(hmac);
     }
     return self;
 }
 
-- (id) initWithExtendedKey:(NSData*)extendedKey
+- (id) initWithExtendedKey:(NSString*)extkey
+{
+    return [self initWithExtendedKeyData:BTCDataFromBase58Check(extkey)];
+}
+
+- (id) initWithExtendedKeyData:(NSData*)extendedKeyData
 {
     if (self = [super init])
     {
-        if (extendedKey.length != 78) return nil;
+        if (extendedKeyData.length != 78) return nil;
 
-        const uint8_t* bytes = extendedKey.bytes;
+        const uint8_t* bytes = extendedKeyData.bytes;
         uint32_t version = OSSwapBigToHostInt32(*((uint32_t*)bytes));
 
         uint32_t keyprefix = bytes[45];
@@ -57,13 +82,13 @@
         {
             // Should have 0-prefixed private key (1 + 32 bytes).
             if (keyprefix != 0) return nil;
-            _privateKey = [extendedKey subdataWithRange:NSMakeRange(46, 32)];
+            _privateKey = BTCDataRange(extendedKeyData, NSMakeRange(46, 32));
         }
         else
         {
             // Should have a 33-byte public key with non-zero first byte.
             if (keyprefix == 0) return nil;
-            _publicKey = [extendedKey subdataWithRange:NSMakeRange(45, 33)];
+            _publicKey = BTCDataRange(extendedKeyData, NSMakeRange(45, 33));
         }
 
         _depth = *(bytes + 4);
@@ -76,7 +101,7 @@
             _hardened = YES;
         }
         
-        _chainCode = [extendedKey subdataWithRange:NSMakeRange(13, 32)];
+        _chainCode = BTCDataRange(extendedKeyData,NSMakeRange(13, 32));
     }
     return self;
 }
@@ -85,8 +110,29 @@
 #pragma mark - Properties
 
 
+// deprecated
 - (BTCKey*) rootKey
 {
+    return self.key;
+}
+
+- (NSString*) extendedPrivateKey
+{
+    CHECK_IF_CLEARED;
+    return BTCBase58CheckStringWithData([self extendedPrivateKeyData]);
+}
+
+- (NSString*) extendedPublicKey
+{
+    CHECK_IF_CLEARED;
+    return BTCBase58CheckStringWithData([self extendedPublicKeyData]);
+}
+
+
+- (BTCKey*) key
+{
+    CHECK_IF_CLEARED;
+
     if (_privateKey)
     {
         BTCKey* key = [[BTCKey alloc] initWithPrivateKey:_privateKey];
@@ -99,11 +145,13 @@
     }
 }
 
-- (NSData*) extendedPrivateKey
+- (NSData*) extendedPrivateKeyData
 {
+    CHECK_IF_CLEARED;
+
     if (!_privateKey) return nil;
     
-    if (!_extendedPrivateKey)
+    if (!_extendedPrivateKeyData)
     {
         NSMutableData* data = [self extendedKeyPrefixWithVersion:BTCKeychainPrivateExtendedKeyVersion];
         
@@ -111,14 +159,16 @@
         [data appendBytes:&padding length:1];
         [data appendData:_privateKey];
         
-        _extendedPrivateKey = data;
+        _extendedPrivateKeyData = data;
     }
-    return _extendedPrivateKey;
+    return _extendedPrivateKeyData;
 }
 
-- (NSData*) extendedPublicKey
+- (NSData*) extendedPublicKeyData
 {
-    if (!_extendedPublicKey)
+    CHECK_IF_CLEARED;
+
+    if (!_extendedPublicKeyData)
     {
         NSData* pubkey = self.publicKey;
         
@@ -128,13 +178,15 @@
         
         [data appendData:pubkey];
         
-        _extendedPublicKey = data;
+        _extendedPublicKeyData = data;
     }
-    return _extendedPublicKey;
+    return _extendedPublicKeyData;
 }
 
 - (NSMutableData*) extendedKeyPrefixWithVersion:(uint32_t)version
 {
+    CHECK_IF_CLEARED;
+
     NSMutableData* data = [NSMutableData data];
     
     version = OSSwapHostToBigInt32(version);
@@ -155,6 +207,8 @@
 
 - (NSData*) identifier
 {
+    CHECK_IF_CLEARED;
+
     if (!_identifier)
     {
         _identifier = BTCHash160(self.publicKey);
@@ -164,16 +218,20 @@
 
 - (uint32_t) fingerprint
 {
+    CHECK_IF_CLEARED;
+
     if (_fingerprint == 0)
     {
-        const uint32_t* bytes = self.identifier.bytes;
-        _fingerprint = OSSwapBigToHostInt32(bytes[0]);
+        const uint32_t* words = self.identifier.bytes;
+        _fingerprint = OSSwapBigToHostInt32(words[0]);
     }
     return _fingerprint;
 }
 
 - (NSData*) publicKey
 {
+    CHECK_IF_CLEARED;
+
     if (!_publicKey)
     {
         _publicKey = [[[BTCKey alloc] initWithPrivateKey:_privateKey] compressedPublicKey];
@@ -183,11 +241,13 @@
 
 - (BOOL) isPrivate
 {
+    CHECK_IF_CLEARED;
     return !!_privateKey;
 }
 
 - (BOOL) isHardened
 {
+    CHECK_IF_CLEARED;
     return _hardened;
 }
 
@@ -203,6 +263,8 @@
 
 - (BTCKeychain*) derivedKeychainAtIndex:(uint32_t)index hardened:(BOOL)hardened factor:(BTCBigNumber**)factorOut
 {
+    CHECK_IF_CLEARED;
+
     // As we use explicit parameter "hardened", do not allow higher bit set.
     if ((0x80000000 & index) != 0)
     {
@@ -247,7 +309,7 @@
     
     if (factorOut) *factorOut = factor;
     
-    derivedKeychain.chainCode = [digest subdataWithRange:NSMakeRange(32, 32)];
+    derivedKeychain.chainCode = BTCDataRange(digest, NSMakeRange(32, 32));
     
     if (_privateKey)
     {
@@ -257,8 +319,10 @@
         // Check for invalid derivation.
         if ([pkNumber isEqual:[BTCBigNumber zero]]) return nil;
         
-        derivedKeychain.privateKey = pkNumber.unsignedData;
+        NSData* pkData = pkNumber.unsignedData;
+        derivedKeychain.privateKey = [pkData mutableCopy];
         
+        BTCDataClear(pkData);
         [pkNumber clear];
     }
     else
@@ -269,7 +333,10 @@
         // Check for invalid derivation.
         if ([point isInfinity]) return nil;
         
-        derivedKeychain.publicKey = point.data;
+        NSData* pointData = point.data;
+        derivedKeychain.publicKey = [pointData mutableCopy];
+        BTCDataClear(pointData);
+        [point clear];
     }
     
     derivedKeychain.depth = _depth + 1;
@@ -286,15 +353,17 @@
 }
 - (BTCKey*) keyAtIndex:(uint32_t)index hardened:(BOOL)hardened
 {
-    return [[self derivedKeychainAtIndex:index hardened:hardened] rootKey];
+    return [[self derivedKeychainAtIndex:index hardened:hardened] key];
 }
 
 - (BTCKeychain*) publicKeychain
 {
+    CHECK_IF_CLEARED;
+
     BTCKeychain* keychain = [[BTCKeychain alloc] init];
     
-    keychain.chainCode = self.chainCode;
-    keychain.publicKey = self.publicKey;
+    keychain.chainCode = [self.chainCode mutableCopy];
+    keychain.publicKey = [self.publicKey mutableCopy];
     keychain.parentFingerprint = self.parentFingerprint;
     keychain.index = self.index;
     keychain.depth = self.depth;
@@ -303,10 +372,155 @@
     return keychain;
 }
 
-- (void) clear
+
+
+// BIP44 methods.
+// These methods are meant to be chained like so:
+// ```
+// invoiceAddress = [[rootKeychain.bitcoinMainnetKeychain keychainForAccount:1] externalKeyAtIndex:123].address
+// ```
+
+
+// Returns a subchain with path m/44'/0'
+- (BTCKeychain*) bitcoinMainnetKeychain
 {
-#warning FIXME: keep privateKey in NSMutableData, also add BTCSubdataWithRange(data, range) that returns mutable data (so it's zeroable).
-//  BTCDataClear(_privateKey);
+    return [[self derivedKeychainAtIndex:44 hardened:YES] derivedKeychainAtIndex:0 hardened:YES];
+}
+
+// Returns a subchain with path m/44'/1'
+- (BTCKeychain*) bitcoinTestnetKeychain
+{
+    return [[self derivedKeychainAtIndex:44 hardened:YES] derivedKeychainAtIndex:1 hardened:YES];
+}
+
+// Returns a hardened derivation for the given account index.
+// Equivalent to [keychain derivedKeychainAtIndex:accountIndex hardened:YES]
+- (BTCKeychain*) keychainForAccount:(uint32_t)accountIndex
+{
+    return [self derivedKeychainAtIndex:accountIndex hardened:YES];
+}
+
+// Returns a key from an external chain (/0/i).
+// BTCKey may be public-only if the receiver is public-only keychain.
+- (BTCKey*) externalKeyAtIndex:(uint32_t)index
+{
+    return [[self derivedKeychainAtIndex:0 hardened:NO] keyAtIndex:index hardened:NO];
+}
+
+// Returns a key from an internal (change) chain (/1/i).
+// BTCKey may be public-only if the receiver is public-only keychain.
+- (BTCKey*) changeKeyAtIndex:(uint32_t)index
+{
+    return [[self derivedKeychainAtIndex:1 hardened:NO] keyAtIndex:index hardened:NO];
+}
+
+
+
+#pragma mark - Scanning methods.
+
+
+// Scans child keys till one is found that matches the given address.
+// Only BTCPublicKeyAddress and BTCPrivateKeyAddress are supported. For others nil is returned.
+// Limit is maximum number of keys to scan. If no key is found, returns nil.
+- (BTCKeychain*) findKeychainForAddress:(BTCAddress*)address hardened:(BOOL)hardened limit:(NSUInteger)limit
+{
+    return [self findKeychainForAddress:address hardened:hardened from:0 limit:limit];
+}
+
+- (BTCKeychain*) findKeychainForAddress:(BTCAddress*)address hardened:(BOOL)hardened from:(uint32_t)startIndex limit:(NSUInteger)limit
+{
+    CHECK_IF_CLEARED;
+
+    if (!address) return nil;
+    if (!self.isPrivate) return nil;
+    
+    if ([address isKindOfClass:[BTCPrivateKeyAddress class]])
+    {
+        BTCPrivateKeyAddress* privkeyAddress = (BTCPrivateKeyAddress*)address;
+        BTCKey* key = privkeyAddress.key;
+        NSMutableData* privkeyData = key.privateKey;
+        
+        BTCKeychain* result = nil;
+        
+        for (uint32_t i = startIndex; i < (startIndex + limit); i++)
+        {
+            BTCKeychain* keychain = [self derivedKeychainAtIndex:i hardened:hardened];
+            
+            if ([keychain.privateKey isEqual:privkeyData])
+            {
+                result = keychain;
+                break;
+            }
+            
+            [keychain clear];
+        }
+        
+        [key clear];
+        BTCDataClear(privkeyData);
+        
+        return result;
+    }
+    
+    if ([address isKindOfClass:[BTCPublicKeyAddress class]])
+    {
+        NSData* hash160 = ((BTCPublicKeyAddress*)address).data;
+        
+        BTCKeychain* result = nil;
+        
+        for (uint32_t i = startIndex; i < (startIndex + limit); i++)
+        {
+            BTCKeychain* keychain = [self derivedKeychainAtIndex:i hardened:hardened];
+            
+            if ([keychain.identifier isEqual:hash160])
+            {
+                result = keychain;
+                break;
+            }
+            
+            [keychain clear];
+        }
+        
+        return result;
+    }
+    
+    return nil;
+}
+
+
+// Scans child keys till one is found that matches the given public key.
+// Limit is maximum number of keys to scan. If no key is found, returns nil.
+- (BTCKeychain*) findKeychainForPublicKey:(BTCKey*)pubkey hardened:(BOOL)hardened limit:(NSUInteger)limit
+{
+    return [self findKeychainForPublicKey:pubkey hardened:hardened from:0 limit:limit];
+}
+
+- (BTCKeychain*) findKeychainForPublicKey:(BTCKey*)pubkey hardened:(BOOL)hardened from:(uint32_t)startIndex limit:(NSUInteger)limit
+{
+    CHECK_IF_CLEARED;
+
+    if (!pubkey) return nil;
+    if (!self.isPrivate) return nil;
+    
+    NSData* data = pubkey.compressedPublicKey;
+    
+    BTCKeychain* result = nil;
+    
+    for (uint32_t i = startIndex; i < (startIndex + limit); i++)
+    {
+        BTCKeychain* keychain = [self derivedKeychainAtIndex:i hardened:hardened];
+        
+        if ([keychain.publicKey isEqual:data])
+        {
+            result = keychain;
+            break;
+        }
+        
+        [keychain clear];
+    }
+    
+    BTCDataClear(data);
+    
+    return result;
 }
 
 
@@ -316,11 +530,13 @@
 
 - (id) copyWithZone:(NSZone *)zone
 {
+    CHECK_IF_CLEARED;
+
     BTCKeychain* keychain = [[BTCKeychain alloc] init];
     
-    keychain.chainCode = self.chainCode;
-    keychain.privateKey = self.privateKey;
-    if (!_privateKey) keychain.publicKey = self.publicKey;
+    keychain.chainCode = [self.chainCode mutableCopy];
+    keychain.privateKey = [self.privateKey mutableCopy];
+    if (!_privateKey) keychain.publicKey = [self.publicKey mutableCopy];
     keychain.parentFingerprint = self.parentFingerprint;
     keychain.index = self.index;
     keychain.depth = self.depth;
@@ -331,6 +547,8 @@
 
 - (BOOL) isEqual:(BTCKeychain*)other
 {
+    CHECK_IF_CLEARED;
+
     if (self == other) return YES;
     
     if (self.isPrivate != other.isPrivate) return NO;
@@ -360,7 +578,7 @@
 
 - (NSString*) description
 {
-    return [NSString stringWithFormat:@"<%@:0x%p %@>", [self class], self, BTCBase58CheckStringWithData(self.extendedPublicKey)];
+    return [NSString stringWithFormat:@"<%@:0x%p %@>", [self class], self, BTCBase58CheckStringWithData(self.extendedPublicKeyData)];
 }
 
 - (NSString*) debugDescription
@@ -371,9 +589,9 @@
             _hardened ? @" hardened:YES" : @"",
             _parentFingerprint,
             self.fingerprint,
-            [BTCHexStringFromData(self.privateKey) substringToIndex:8],
-            [BTCHexStringFromData(self.publicKey) substringToIndex:8],
-            [BTCHexStringFromData(self.chainCode) substringToIndex:8]
+            [BTCHexFromData(self.privateKey) substringToIndex:8],
+            [BTCHexFromData(self.publicKey) substringToIndex:8],
+            [BTCHexFromData(self.chainCode) substringToIndex:8]
             ];
 }
 

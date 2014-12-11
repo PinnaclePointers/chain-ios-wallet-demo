@@ -1,26 +1,23 @@
 PODS:
-  - CDZQRScanningViewController (1.0.7)
-  - Chain (0.1.12)
-  - CoreBitcoin (0.3.0):
+  - Chain (3.0pre1):
+    - CoreBitcoin (~> 0.6.0)
+    - ISO8601DateFormatter (= 0.7)
+  - CoreBitcoin (0.6.0):
     - OpenSSL-Universal (= 1.0.1.h)
+  - ISO8601DateFormatter (0.7)
   - OpenSSL-Universal (1.0.1.h)
-  - QR-Code-Encoder-for-Objective-C (1.0.0)
 
 DEPENDENCIES:
-  - CDZQRScanningViewController
-  - Chain (= 0.1.12)
-  - CoreBitcoin (from `https://raw.github.com/oleganza/CoreBitcoin/master/CoreBitcoin.podspec`)
-  - QR-Code-Encoder-for-Objective-C
+  - Chain (from `../chain-ios`)
 
 EXTERNAL SOURCES:
-  CoreBitcoin:
-    :podspec: https://raw.github.com/oleganza/CoreBitcoin/master/CoreBitcoin.podspec
+  Chain:
+    :path: ../chain-ios
 
 SPEC CHECKSUMS:
-  CDZQRScanningViewController: 69cb48a4d02c483a8ee43da15b8fd23fc4e853f3
-  Chain: e483d62cce29a6d38bc722386bcd22609b1077f4
-  CoreBitcoin: 351ea65d3e4f3f6fd7f01303fb23c333fd714121
-  OpenSSL-Universal: c109d62ff4632cfa306e98d2159365266b3f44c3
-  QR-Code-Encoder-for-Objective-C: 7b738fc1dc4b3f5f49e3fd841cbfd3da849b7f23
+  Chain: c08b26b4cd20eda04c5564626f17be03131e292d
+  CoreBitcoin: 34bd7ca7d11da3586133f84337a38217ec95698b
+  ISO8601DateFormatter: 59731cd880cf87e71b4fa95f0d6b713dcbc4cbce
+  OpenSSL-Universal: 9c112508615ed33bb35f730eed820e93175a9dec
 
-COCOAPODS: 0.33.1
+COCOAPODS: 0.35.0
