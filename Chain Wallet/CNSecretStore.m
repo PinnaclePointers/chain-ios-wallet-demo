@@ -101,7 +101,11 @@
     }
     NSString* wif = key.privateKeyAddress.base58String;
     NSError* error = nil;
-    if (![self writeItem:[wif dataUsingEncoding:NSUTF8StringEncoding] withName:@"wif" accessibility: kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly error:&error]) {
+    // If you do not want the secret to leave the device (iCloud backup), use:
+    // - kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+    // If you want to backup on iCloud, use this:
+    // - kSecAttrAccessibleWhenUnlocked
+    if (![self writeItem:[wif dataUsingEncoding:NSUTF8StringEncoding] withName:@"wif" accessibility: kSecAttrAccessibleWhenUnlocked error:&error]) {
         self.error = error;
         return;
     }

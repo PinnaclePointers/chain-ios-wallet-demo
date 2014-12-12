@@ -6,6 +6,7 @@
 //
 
 #import "CNWelcomeViewController.h"
+#import "CNAppDelegate.h"
 #import "CNSecretStore.h"
 #import <CoreBitcoin/CoreBitcoin.h>
 
@@ -25,15 +26,11 @@
 
     // If we cannot read
     if (!k) {
-
         [[[UIAlertView alloc] initWithTitle:@"Passcode Required" message:@"You should enable the passcode on your device to use Chain Wallet" delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil] show];
         return;
     }
 
-    // Present transactions view contorller.
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"transactionsNavigationController"];
-    [self presentViewController:viewController animated:YES completion:nil];
+    [[CNAppDelegate sharedInstance] showHomeScreen];
 }
 
 - (BTCKey*) generateRandomKey {

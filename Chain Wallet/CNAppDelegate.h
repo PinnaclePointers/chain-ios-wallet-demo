@@ -11,4 +11,9 @@
 
 @property (strong, nonatomic) UIWindow *window;
 
++ (CNAppDelegate*) sharedInstance;
+
+- (void) showWelcomeScreen;
+- (void) showHomeScreen;
+
 @end

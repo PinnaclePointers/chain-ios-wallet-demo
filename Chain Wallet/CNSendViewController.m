@@ -7,116 +7,245 @@
 
 #import "CNSendViewController.h"
 #import "CNBitcoinSendManager.h"
+#import "CNSecretStore.h"
 #import "NSString+Additions.h"
-#import <CoreBitcoin/CoreBitcoin+Categories.h>
+#import <CoreBitcoin/CoreBitcoin.h>
+#import <Chain/Chain.h>
 
-#define FIXED_FEE 10000
-
-@interface CNSendViewController ()
+@interface CNSendViewController () <BTCTransactionBuilderDataSource>
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *cancelButton;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *sendButton;
 @property (weak, nonatomic) IBOutlet UITextField *amountTextField;
 @property (weak, nonatomic) IBOutlet UILabel *sentToAddressLabel;
 @property (weak, nonatomic) IBOutlet UILabel *amountAvailable;
+
 @property (nonatomic) BTCAmount balance;
+@property (nonatomic) NSArray* unspentOutputs;
+@property (nonatomic) BTCKey* unlockedKey;
+@property (nonatomic) ChainNotificationObserver* addressObserver;
 @end
 
 @implementation CNSendViewController
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    [self.amountTextField becomeFirstResponder];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+
     self.sentToAddressLabel.text = self.address.string;
-    
-    // A transaction requires a miner fee
-    BTCAmount availableBalance = self.balance - FIXED_FEE;
-    self.amountAvailable.text = [NSString stringWithFormat:@"฿ %@ Available (after miner fee)", [NSString stringWithSatoshiInBTCFormat:availableBalance]];
+    self.amountAvailable.text = @"";
+
+    if (self.amount > 0) {
+        self.amountTextField.text = [self formattedAmount:self.amount];
+    }
+
+    [self updateCoins:nil];
+    [self updateObserver];
+    [self.amountTextField becomeFirstResponder];
 }
 
-#pragma mark - IB Actions
-
-- (IBAction)sendButtonPressed:(id)sender {
-    [self presentConfirmationAlert];
+- (void) viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self.addressObserver disconnect];
+    self.addressObserver = nil;
 }
 
-- (IBAction)cancelSendViewController:(id)sender {
-    [self.amountTextField resignFirstResponder];
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+- (BTCAddress*) walletAddress {
+    return [CNSecretStore chainSecretStore].currentAddress;
 }
 
-#pragma mark - Send Method
+- (BTCAmount) feeRate {
+    return 1000;
+}
 
-- (void)initiateSend {
-    [self showSendingSpinner];
-    NSString *amountString = self.amountTextField.text;
-    NSDecimalNumber *amountDecimalNumber = [NSDecimalNumber decimalNumberWithString:amountString];
-    NSDecimalNumber *satoshiAmountDecimalNumber = [amountDecimalNumber decimalNumberByMultiplyingBy:[[NSDecimalNumber alloc] initWithUnsignedInteger:BTCCoin]];
-    
-    NSUInteger satoshiAmountInteger = [satoshiAmountDecimalNumber unsignedIntegerValue];
-    
-    __weak UIViewController *presentingViewController = self.presentingViewController;
+- (BTCNumberFormatter*) btcFormatter {
+    return [[BTCNumberFormatter alloc] initWithBitcoinUnit:BTCNumberFormatterUnitBTC symbolStyle:BTCNumberFormatterSymbolStyleSymbol];
+}
 
-    BTCAmount fee = FIXED_FEE;
-    if (self.address) {
-        [CNBitcoinSendManager sendAmount:(NSUInteger)satoshiAmountInteger receiveAddresss:self.address.string fee:fee completionHandler:^(NSDictionary *dictionary, NSError *error) {
-            NSLog(@"%@", dictionary);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (error) {
-                    [self _presentErrorAlert:error.localizedDescription];
-                } else {
-                    [self.amountTextField resignFirstResponder];
-                    [presentingViewController dismissViewControllerAnimated:YES completion:nil];
-                }
-            });
-        }];
+- (BTCAmount) spendingAmount {
+    return [self.btcFormatter amountFromString:self.amountTextField.text];
+}
+
+- (BTCAmount) remainingBalance {
+    return self.balance - self.feeRate - self.spendingAmount;
+}
+
+- (NSString*) formattedAmount:(BTCAmount) amount {
+    return [self.btcFormatter stringFromAmount:amount];
+}
+
+
+
+#pragma mark - Update Methods
+
+
+
+- (void) updateCoins:(void(^)())block {
+
+    [[Chain sharedInstance] getAddressUnspents:self.walletAddress completionHandler:^(NSArray *unspentOutputs, NSError *error) {
+        if (unspentOutputs) {
+            self.unspentOutputs = unspentOutputs;
+
+            self.balance = 0;
+            for (BTCTransactionOutput* txout in unspentOutputs) {
+                self.balance += txout.value;
+            }
+            
+            [self updateBalance];
+        }
+        if (block) block();
+    }];
+}
+
+- (void) updateBalance {
+    BTCAmount rem = self.remainingBalance;
+    if (rem >= 0) {
+        self.amountAvailable.text = [NSString stringWithFormat:@"%@ available", [self formattedAmount:rem]];
     } else {
-        NSString *errorString = @"Send to address does not exist.";
-        [self _presentErrorAlert:errorString];
+        self.amountAvailable.text = NSLocalizedString(@"Not enough coins.", @"");
     }
 }
 
-#pragma mark - Alert Views
-
-- (void)_presentErrorAlert:(NSString *)errorString {
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Error Sending" message:errorString delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK", nil];
-    [alertView show];
-    [self showSendButton];
+- (void) updateObserver {
+    [self.addressObserver disconnect];
+    // Listen to new transactions on this address and update balance as needed.
+    __weak __typeof(self) weakself = self;
+    self.addressObserver = [[Chain sharedInstance] observerForNotification:
+                            [[ChainNotification alloc] initWithAddress:self.walletAddress]
+                                                             resultHandler:^(ChainNotificationResult *notification) {
+                                                                 [weakself updateCoins:nil];
+                                                             }];
 }
 
-- (void)presentConfirmationAlert {
-    NSString *amountString = self.amountTextField.text;
-    NSString *confirmationMessage  = [NSString stringWithFormat:@"Are you sure you want to send ฿ %@ to %@?", amountString, self.address.string];
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Send Bitcoin?"
-                                                        message:confirmationMessage
-                                                       delegate:self
-                                              cancelButtonTitle:@"Cancel"
-                                              otherButtonTitles:@"Send", nil];
-    [alertView show];
-}
-
-- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
-    if(buttonIndex == 1)
-        [self initiateSend];
-}
-
-#pragma mark - Send Button States
-
-- (void)showSendingSpinner {
+- (void) showSendingSpinner {
     UIActivityIndicatorView *ai = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:ai];
     [ai startAnimating];
 }
 
-- (void)showSendButton {
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Send" style:UIBarButtonItemStylePlain target:self.sendButton action:@selector(sendButtonPressed:)];
+- (void) showSendButton {
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Send" style:UIBarButtonItemStylePlain target:self.sendButton action:@selector(send:)];
 }
 
-- (IBAction)userTypedAmount:(id)sender {
-    if (((UITextField*)sender).text.length > 0) {
+
+
+#pragma mark - Actions
+
+
+- (IBAction)amountDidChange:(id)sender {
+
+    [self updateBalance];
+
+    if (self.spendingAmount > 0) {
         [self.sendButton setEnabled:YES];
     } else {
         [self.sendButton setEnabled:NO];
     }
 }
+
+- (IBAction)send:(id)sender {
+
+    [self showSendingSpinner];
+
+    [self updateCoins:^{
+        BTCAmount amount = self.spendingAmount;
+        BTCAddress* address = self.address;
+
+        if (amount == 0 || self.remainingBalance < 0) return;
+
+        NSString* reason = [NSString stringWithFormat:NSLocalizedString(@"Send %@ to %@?", @""),
+                            [self formattedAmount:amount], address.string];
+
+        [[CNSecretStore chainSecretStore] unlock:^id(CNSecretStore *store, NSError **errorOut) {
+            return store.key;
+        } reason:reason completionBlock:^(id result, NSError *error) {
+            if (result) {
+                self.unlockedKey = result;
+
+                [self sendAmount:amount to:address];
+
+                [self.unlockedKey clear];
+                self.unlockedKey = nil;
+            }
+        }];
+    }];
+}
+
+- (IBAction)cancel:(id)sender {
+    [self.amountTextField resignFirstResponder];
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+
+
+
+#pragma mark - Send Helpers
+
+
+
+- (void)sendAmount:(BTCAmount)amount to:(BTCAddress*)address {
+
+    BTCTransactionBuilder* builder = [[BTCTransactionBuilder alloc] init];
+    builder.outputs = @[ [[BTCTransactionOutput alloc] initWithValue:amount address:address] ];
+    builder.changeAddress = self.walletAddress;
+    builder.feeRate = self.feeRate;
+    builder.dataSource = self;
+
+    NSError* berror = nil;
+    BTCTransactionBuilderResult* result = nil;
+
+    result = [builder buildTransaction:&berror];
+
+    if (!result) {
+        [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error",@"")
+                                    message:NSLocalizedString(@"Cannot spend funds.", @"")
+                                   delegate:nil
+                          cancelButtonTitle:NSLocalizedString(@"OK",@"")
+                          otherButtonTitles:nil] show];
+        return;
+    }
+
+    [self broadcastTransaction:result.transaction];
+}
+
+- (void) broadcastTransaction:(BTCTransaction*)tx {
+
+    [self showSendingSpinner];
+
+    [[Chain sharedInstance] sendTransaction:tx completionHandler:^(BTCTransaction *tx, NSError *error) {
+
+        [self showSendButton];
+
+        if (!tx) {
+            [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error",@"")
+                                        message:error.localizedDescription ?: NSLocalizedString(@"Failed to send transaction.", @"")
+                                       delegate:nil
+                              cancelButtonTitle:NSLocalizedString(@"OK",@"")
+                              otherButtonTitles:nil] show];
+            return;
+        }
+
+        [self.amountTextField resignFirstResponder];
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    }];
+}
+
+
+
+#pragma mark - BTCTransactionBuilderDataSource
+
+
+- (NSEnumerator* /* [BTCTransactionOutput] */) unspentOutputsForTransactionBuilder:(BTCTransactionBuilder*)txbuilder
+{
+    return [self.unspentOutputs objectEnumerator];
+}
+
+- (BTCKey*) transactionBuilder:(BTCTransactionBuilder*)txbuilder keyForUnspentOutput:(BTCTransactionOutput*)txout
+{
+    return self.unlockedKey;
+}
+
+
+
+
+
 
 @end

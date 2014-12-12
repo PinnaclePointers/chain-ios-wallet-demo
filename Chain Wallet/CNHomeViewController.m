@@ -82,7 +82,7 @@
 }
 
 - (IBAction) options:(id)sender {
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Options", @"")
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:nil
                                                                    message:nil
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
 
@@ -285,7 +285,7 @@
         NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
         fmt.timeZone = [NSTimeZone systemTimeZone];
         fmt.timeStyle = NSDateFormatterNoStyle;
-        fmt.dateStyle = NSDateFormatterShortStyle;
+        fmt.dateStyle = NSDateFormatterMediumStyle;
         localDateString = [fmt stringFromDate:tx.blockDate];
     }
     
@@ -300,20 +300,24 @@
     // Transaction Amount
     BTCAmount txValue = [self valueForTransactionForCurrentUser:tx];
     amountLabel.text = [self formattedAmount:txValue];
-    
+
+    int neutralColor = 0xA874ED;
+    int redColor     = 0xFF567A;
+    int greenColor   = 0x24C3BA;
+
     // Change Color of Transaction Amount if is sent or received or to self
     BOOL isTransactionToSelf = [self isTransactionToSelf:tx];
     if (isTransactionToSelf) {
-        amountLabel.textColor = [UIColor colorWithHex:0x7d2b8b];
+        amountLabel.textColor = [UIColor colorWithHex:neutralColor];
         addressLabel.text = @"To: myself";
     } else {
         if (txValue < 0) {
             // Sent
-            amountLabel.textColor = [UIColor colorWithHex:0xf76b6b];
+            amountLabel.textColor = [UIColor colorWithHex:redColor];
             addressLabel.text = [NSString stringWithFormat:@"To: %@", [self outputAddressesString:tx]];
         } else {
             // Receive
-            amountLabel.textColor = [UIColor colorWithHex:0x7fdf40];
+            amountLabel.textColor = [UIColor colorWithHex:greenColor];
             addressLabel.text = [NSString stringWithFormat:@"From: %@", [self inputAddressesString:tx]];
         }
     }
@@ -398,7 +402,7 @@
         if (!addr) return nil;
         [filteredAddresses addObject:addr];
     }
-    return addresses;
+    return filteredAddresses;
 }
 
 - (NSString *) filteredTruncatedAddress:(NSArray *)addresses {

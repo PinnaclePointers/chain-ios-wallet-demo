@@ -16,6 +16,11 @@ static NSString* CNSampleToken = @"2277e102b5d28a90700ff3062a282228";
 
 @implementation CNAppDelegate
 
++ (CNAppDelegate*) sharedInstance
+{
+    return (CNAppDelegate*)[UIApplication sharedApplication].delegate;
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
 #warning TODO: Replace this sample token with your actual token.
@@ -36,21 +41,30 @@ static NSString* CNSampleToken = @"2277e102b5d28a90700ff3062a282228";
                                                            [UIFont fontWithName:@"AvenirNext-Medium" size:18.0], NSFontAttributeName, nil]];
     
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
 
     // Show welcome screen if we haven't generated an address.
     BTCKey* pubkey = [CNSecretStore chainSecretStore].publicKey;
-    UIViewController *viewController  = nil;
     if (!pubkey) {
-        viewController = [storyboard instantiateViewControllerWithIdentifier:@"welcomeViewController"];
+        [self showWelcomeScreen];
     } else {
-        viewController = [storyboard instantiateViewControllerWithIdentifier:@"transactionsNavigationController"];
+        [self showHomeScreen];
     }
-    
-    self.window.rootViewController = viewController;
-    [self.window makeKeyAndVisible];
-    
     return YES;
 }
+
+- (void) showWelcomeScreen {
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    UIViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"welcomeViewController"];
+    self.window.rootViewController = vc;
+    [self.window makeKeyAndVisible];
+}
+
+- (void) showHomeScreen {
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    UIViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"transactionsNavigationController"];
+    self.window.rootViewController = vc;
+    [self.window makeKeyAndVisible];
+}
+
 
 @end
