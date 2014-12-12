@@ -20,10 +20,8 @@
 		20C6D3BD1A37AC1F000E04C6 /* CNSecretStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */; };
 		20C6D3C21A38C259000E04C6 /* CNLaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */; };
 		567B7A5D11694E0A8EDEDB42 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DBF0F8BEE9CE42109B86A0DA /* libPods.a */; };
-		C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */; };
 		C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */; };
 		C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9A02FA31974984900680A53 /* UIColor+Additions.m */; };
-		C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = C9DABA6319773205003965C6 /* NSString+Additions.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,14 +60,10 @@
 		2B11A3DF402557584FF218A1 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		7B3C4B0808F5F3A96AC7EB9E /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 		C94D88F9196609AA009240BF /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
-		C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNBitcoinSendManager.h; sourceTree = "<group>"; };
-		C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNBitcoinSendManager.m; sourceTree = "<group>"; };
 		C97A877819705FE0006EE6EA /* CNWelcomeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNWelcomeViewController.h; sourceTree = "<group>"; };
 		C97A877919705FE0006EE6EA /* CNWelcomeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNWelcomeViewController.m; sourceTree = "<group>"; };
 		C9A02FA21974984900680A53 /* UIColor+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Additions.h"; sourceTree = "<group>"; };
 		C9A02FA31974984900680A53 /* UIColor+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Additions.m"; sourceTree = "<group>"; };
-		C9DABA6219773205003965C6 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
-		C9DABA6319773205003965C6 /* NSString+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Additions.m"; sourceTree = "<group>"; };
 		DBF0F8BEE9CE42109B86A0DA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -129,11 +123,10 @@
 				000BEB9819649FAD008E2865 /* CNSendViewController.m */,
 				00B50AD5196F27510066A0A5 /* CNExportPKeyViewController.h */,
 				00B50AD4196F27510066A0A5 /* CNExportPKeyViewController.mm */,
-				C94D88FB19661B73009240BF /* CNBitcoinSendManager.h */,
-				C94D88FC19661B73009240BF /* CNBitcoinSendManager.m */,
 				20C6D3BB1A37AC1F000E04C6 /* CNSecretStore.h */,
 				20C6D3BC1A37AC1F000E04C6 /* CNSecretStore.m */,
-				C9A02FA11974981A00680A53 /* Additions */,
+				C9A02FA21974984900680A53 /* UIColor+Additions.h */,
+				C9A02FA31974984900680A53 /* UIColor+Additions.m */,
 				000BEB8119649F48008E2865 /* Images.xcassets */,
 				000BEB7E19649F48008E2865 /* Main.storyboard */,
 				20C6D3C11A38C259000E04C6 /* CNLaunchScreen.xib */,
@@ -168,17 +161,6 @@
 				DBF0F8BEE9CE42109B86A0DA /* libPods.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		C9A02FA11974981A00680A53 /* Additions */ = {
-			isa = PBXGroup;
-			children = (
-				C9DABA6219773205003965C6 /* NSString+Additions.h */,
-				C9DABA6319773205003965C6 /* NSString+Additions.m */,
-				C9A02FA21974984900680A53 /* UIColor+Additions.h */,
-				C9A02FA31974984900680A53 /* UIColor+Additions.m */,
-			);
-			name = Additions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -327,9 +309,7 @@
 				C97A877A19705FE0006EE6EA /* CNWelcomeViewController.m in Sources */,
 				000BEB7D19649F48008E2865 /* CNHomeViewController.m in Sources */,
 				20C58DB41A3A594E0078BDE4 /* CNRestoreViewController.m in Sources */,
-				C94D88FD19661B73009240BF /* CNBitcoinSendManager.m in Sources */,
 				C9A02FA41974984900680A53 /* UIColor+Additions.m in Sources */,
-				C9DABA6419773205003965C6 /* NSString+Additions.m in Sources */,
 				000BEB7A19649F48008E2865 /* CNAppDelegate.m in Sources */,
 				004EA53B196CC3E30061A6B0 /* CNReceiveViewController.mm in Sources */,
 				00B50AD6196F27510066A0A5 /* CNExportPKeyViewController.mm in Sources */,

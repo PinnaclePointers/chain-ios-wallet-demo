@@ -6,9 +6,7 @@
 //
 
 #import "CNSendViewController.h"
-#import "CNBitcoinSendManager.h"
 #import "CNSecretStore.h"
-#import "NSString+Additions.h"
 #import <CoreBitcoin/CoreBitcoin.h>
 #import <Chain/Chain.h>
 

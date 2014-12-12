@@ -12,7 +12,6 @@
 #import "CNExportPKeyViewController.h"
 #import "CNSecretStore.h"
 #import "UIColor+Additions.h"
-#import "NSString+Additions.h"
 
 
 @interface CNHomeViewController () <UIActionSheetDelegate, UITableViewDataSource, UITableViewDelegate>
