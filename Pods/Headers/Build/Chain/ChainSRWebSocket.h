@@ -1,1 +1,1 @@
-../../../../../chain-ios/Chain/ChainSRWebSocket.h
+../../../Chain/Chain/ChainSRWebSocket.h

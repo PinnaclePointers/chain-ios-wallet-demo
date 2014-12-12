@@ -1,1 +1,1 @@
-../../../../../chain-ios/Chain/ChainSigner.h
+../../../Chain/Chain/ChainSigner.h

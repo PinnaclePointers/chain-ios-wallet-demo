@@ -1,5 +1,5 @@
 PODS:
-  - Chain (3.0pre1):
+  - Chain (3.0pre2):
     - CoreBitcoin (~> 0.6.0)
     - ISO8601DateFormatter (= 0.7)
   - CoreBitcoin (0.6.0):
@@ -8,14 +8,10 @@ PODS:
   - OpenSSL-Universal (1.0.1.h)
 
 DEPENDENCIES:
-  - Chain (from `../chain-ios`)
-
-EXTERNAL SOURCES:
-  Chain:
-    :path: ../chain-ios
+  - Chain (= 3.0pre2)
 
 SPEC CHECKSUMS:
-  Chain: c08b26b4cd20eda04c5564626f17be03131e292d
+  Chain: 54b88c7b211170b1774a6a039067999fdb1a5242
   CoreBitcoin: 34bd7ca7d11da3586133f84337a38217ec95698b
   ISO8601DateFormatter: 59731cd880cf87e71b4fa95f0d6b713dcbc4cbce
   OpenSSL-Universal: 9c112508615ed33bb35f730eed820e93175a9dec

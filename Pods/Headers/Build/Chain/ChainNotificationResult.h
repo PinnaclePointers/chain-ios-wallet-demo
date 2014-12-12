@@ -1,1 +1,1 @@
-../../../../../chain-ios/Chain/ChainNotificationResult.h
+../../../Chain/Chain/ChainNotificationResult.h
