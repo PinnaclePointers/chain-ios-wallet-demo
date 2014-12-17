@@ -1,1 +1,1 @@
-../../../Chain/Chain/ChainConnection.h
+../../../../../chain-ios/Chain/ChainConnection.h

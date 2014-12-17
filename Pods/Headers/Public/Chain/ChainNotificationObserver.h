@@ -1,1 +1,1 @@
-../../../Chain/Chain/ChainNotificationObserver.h
+../../../../../chain-ios/Chain/ChainNotificationObserver.h

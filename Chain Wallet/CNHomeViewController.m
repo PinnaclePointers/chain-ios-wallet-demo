@@ -194,9 +194,9 @@
 }
 
 - (void) updateBalance {
-    [[Chain sharedInstance] getAddress:self.address completionHandler:^(ChainAddressInfo *addressInfo, NSError *error) {
-        if (addressInfo) {
-            self.balance = addressInfo.totalBalance;
+    [[Chain sharedInstance] getAddress:self.address completionHandler:^(ChainAddress *chainAddress, NSError *error) {
+        if (chainAddress) {
+            self.balance = chainAddress.totalBalance;
         }
     }];
 }

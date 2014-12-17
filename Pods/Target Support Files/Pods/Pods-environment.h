@@ -11,7 +11,7 @@
 // This library does not follow semantic-versioning,
 // so we were not able to define version macros.
 // Please contact the author.
-// Version: 3.0pre2.
+// Version: 3.0pre3.
 
 // CoreBitcoin
 #define COCOAPODS_POD_AVAILABLE_CoreBitcoin

@@ -83,7 +83,7 @@
             self.unspentOutputs = unspentOutputs;
 
             self.balance = 0;
-            for (BTCTransactionOutput* txout in unspentOutputs) {
+            for (ChainTransactionOutput* txout in unspentOutputs) {
                 self.balance += txout.value;
             }
             
@@ -208,7 +208,7 @@
 
     [self showSendingSpinner];
 
-    [[Chain sharedInstance] sendTransaction:tx completionHandler:^(BTCTransaction *tx, NSError *error) {
+    [[Chain sharedInstance] sendTransaction:tx completionHandler:^(ChainTransaction *tx, NSError *error) {
 
         [self showSendButton];
 
