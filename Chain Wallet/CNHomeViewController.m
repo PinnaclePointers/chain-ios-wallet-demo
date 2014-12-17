@@ -330,15 +330,15 @@
 
 
 
-- (BOOL) isTransactionToSelf:(BTCTransaction *)tx {
+- (BOOL) isTransactionToSelf:(ChainTransaction *)tx {
     // If all inputs and outputs are wallet's address.
     NSMutableArray *addresses = [NSMutableArray array];
 
-    for (BTCTransactionInput *txin in tx.inputs) {
-        [addresses addObjectsFromArray:txin.userInfo[@"addresses"]];
+    for (ChainTransactionInput *txin in tx.inputs) {
+        [addresses addObjectsFromArray:txin.addresses];
     }
-    for (BTCTransactionOutput *txout in tx.outputs) {
-        [addresses addObjectsFromArray:txout.userInfo[@"addresses"]];
+    for (ChainTransactionOutput *txout in tx.outputs) {
+        [addresses addObjectsFromArray:txout.addresses];
     }
     
     // Removes wallet address and duplicate addresses. A count of zero means wallet address was included.
@@ -347,7 +347,7 @@
 }
 
 - (BTCAmount) valueForInputOrOutput:(id)txinOrTxout {
-    NSArray *addresses = [txinOrTxout userInfo][@"addresses"];
+    NSArray *addresses = [txinOrTxout addresses];
     for (BTCAddress *address in addresses) {
         if ([address isEqual:self.address]) {
             return [[txinOrTxout valueForKey:@"value"] longLongValue];
@@ -430,18 +430,18 @@
     return addressString;
 }
 
-- (NSString *) inputAddressesString:(BTCTransaction*)tx {
+- (NSString *) inputAddressesString:(ChainTransaction*)tx {
     NSMutableArray *addresses = [NSMutableArray array];
-    for (BTCTransactionInput *txin in tx.inputs) {
-        [addresses addObjectsFromArray:txin.userInfo[@"addresses"]];
+    for (ChainTransactionInput *txin in tx.inputs) {
+        [addresses addObjectsFromArray:txin.addresses];
     }
     return [self filteredTruncatedAddress:addresses];
 }
 
-- (NSString *) outputAddressesString:(BTCTransaction*)tx {
+- (NSString *) outputAddressesString:(ChainTransaction*)tx {
     NSMutableArray *addresses = [NSMutableArray array];
-    for (BTCTransactionOutput *txout in tx.outputs) {
-        [addresses addObjectsFromArray:txout.userInfo[@"addresses"]];
+    for (ChainTransactionOutput *txout in tx.outputs) {
+        [addresses addObjectsFromArray:txout.addresses];
     }
     return [self filteredTruncatedAddress:addresses];
 }
